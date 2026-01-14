@@ -155,6 +155,7 @@ class VoterDashboardScreen extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     _electionCard(
+                      context: context,
                       title: '2024 Presidential Election',
                       date: 'Oct 20 — Nov 5, 2024',
                       description:
@@ -165,6 +166,7 @@ class VoterDashboardScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     _electionCard(
+                      context: context,
                       title: 'City Council - District 4',
                       date: 'Nov 1 — Nov 10, 2024',
                       description:
@@ -242,6 +244,7 @@ class VoterDashboardScreen extends StatelessWidget {
   }
 
   static Widget _electionCard({
+    required BuildContext context,
     required String title,
     required String date,
     required String description,
@@ -302,7 +305,9 @@ class VoterDashboardScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/election');
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       shape: RoundedRectangleBorder(
