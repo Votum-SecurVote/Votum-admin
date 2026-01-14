@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              // Navigator.pushReplacementNamed(context, '/dashboard');
+                              Navigator.pushNamed(context, '/mfa');
                             },
                             icon: const Icon(Icons.login),
                             label: const Text('Sign In to Vote'),
