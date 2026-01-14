@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:securevote/mfa_screen.dart';
+import 'package:securevote/voter_dashboard_screen.dart';
 import 'package:securevote/voter_registration_screen.dart';
 import 'login_screen.dart';
 
@@ -27,6 +28,7 @@ class EVotingApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/mfa': (context) => const MFAScreen(),
         '/register': (context) => const VoterRegistrationScreen(),
+        '/dashboard': (context) => const VoterDashboardScreen(),
       },
     );
   }
