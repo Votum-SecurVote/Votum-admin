@@ -10,37 +10,32 @@ class MFAScreen extends StatefulWidget {
 
 class _MFAScreenState extends State<MFAScreen> {
   static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color charcoal = Color(0xFF344760);
+  static const Color textDark = Color(0xFF344760);
   static const Color borderGray = Color(0xFFDDE1E3);
 
   final List<TextEditingController> controllers = List.generate(
     6,
     (_) => TextEditingController(),
   );
-
   final List<FocusNode> focusNodes = List.generate(6, (_) => FocusNode());
 
   @override
   void dispose() {
-    for (final c in controllers) {
-      c.dispose();
-    }
-    for (final f in focusNodes) {
-      f.dispose();
-    }
+    for (final c in controllers) c.dispose();
+    for (final f in focusNodes) f.dispose();
     super.dispose();
   }
 
-  void _onChanged(String value, int index) {
-    if (value.isNotEmpty && index < 5) {
-      focusNodes[index + 1].requestFocus();
+  void _onChanged(String v, int i) {
+    if (v.isNotEmpty && i < 5) {
+      focusNodes[i + 1].requestFocus();
     }
   }
 
-  void _onBackspace(int index) {
-    if (index > 0 && controllers[index].text.isEmpty) {
-      focusNodes[index - 1].requestFocus();
-      controllers[index - 1].clear();
+  void _onBackspace(int i) {
+    if (i > 0 && controllers[i].text.isEmpty) {
+      focusNodes[i - 1].requestFocus();
+      controllers[i - 1].clear();
     }
   }
 
@@ -50,8 +45,8 @@ class _MFAScreenState extends State<MFAScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final width = constraints.maxWidth > 430
-                ? 430.0
+            final width = constraints.maxWidth > 390
+                ? 390.0
                 : constraints.maxWidth;
 
             return Align(
@@ -59,11 +54,11 @@ class _MFAScreenState extends State<MFAScreen> {
               child: SizedBox(
                 width: width,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// Top App Bar
+                      /// Top bar
                       Row(
                         children: [
                           IconButton(
@@ -75,9 +70,9 @@ class _MFAScreenState extends State<MFAScreen> {
                               'Security Verification',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: charcoal,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: textDark,
                               ),
                             ),
                           ),
@@ -85,15 +80,15 @@ class _MFAScreenState extends State<MFAScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       /// Title
                       const Text(
                         'MFA Verification',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: charcoal,
+                          color: textDark,
                         ),
                       ),
 
@@ -103,9 +98,9 @@ class _MFAScreenState extends State<MFAScreen> {
                       RichText(
                         text: const TextSpan(
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF5F6F7A),
+                            fontSize: 15,
                             height: 1.5,
+                            color: Color(0xFF6A7881),
                           ),
                           children: [
                             TextSpan(
@@ -127,64 +122,68 @@ class _MFAScreenState extends State<MFAScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
-                      /// OTP Fields
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (index) {
-                          return SizedBox(
-                            width: 52,
-                            child: RawKeyboardListener(
-                              focusNode: FocusNode(),
-                              onKey: (event) {
-                                if (event.isKeyPressed(
-                                  LogicalKeyboardKey.backspace,
-                                )) {
-                                  _onBackspace(index);
-                                }
-                              },
-                              child: TextField(
-                                controller: controllers[index],
-                                focusNode: focusNodes[index],
-                                autofocus: index == 0,
-                                maxLength: 1,
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                decoration: InputDecoration(
-                                  counterText: '',
-                                  hintText: '•',
-                                  hintStyle: const TextStyle(fontSize: 20),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: borderGray,
-                                      width: 2,
+                      /// OTP boxes (NO OVERFLOW)
+                      Center(
+                        child: Wrap(
+                          spacing: 8, // horizontal spacing
+                          runSpacing: 8, // vertical spacing (if wraps)
+                          alignment: WrapAlignment.center,
+                          children: List.generate(6, (i) {
+                            return SizedBox(
+                              width: 44, // slightly reduced width
+                              height: 54,
+                              child: RawKeyboardListener(
+                                focusNode: FocusNode(),
+                                onKey: (e) {
+                                  if (e.isKeyPressed(
+                                    LogicalKeyboardKey.backspace,
+                                  )) {
+                                    _onBackspace(i);
+                                  }
+                                },
+                                child: TextField(
+                                  controller: controllers[i],
+                                  focusNode: focusNodes[i],
+                                  autofocus: i == 0,
+                                  maxLength: 1,
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  decoration: InputDecoration(
+                                    counterText: '',
+                                    hintText: '•',
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: borderGray,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: primaryColor,
+                                        width: 2,
+                                      ),
                                     ),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: primaryColor,
-                                      width: 2,
-                                    ),
-                                  ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  onChanged: (v) => _onChanged(v, i),
                                 ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                onChanged: (v) => _onChanged(v, index),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                        ),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
                       /// Resend
                       Center(
@@ -194,8 +193,8 @@ class _MFAScreenState extends State<MFAScreen> {
                               TextSpan(
                                 text: "Didn't receive a code? ",
                                 style: TextStyle(
-                                  color: Color(0xFF7A8791),
                                   fontSize: 14,
+                                  color: Color(0xFF6A7881),
                                 ),
                                 children: [
                                   TextSpan(
@@ -208,7 +207,7 @@ class _MFAScreenState extends State<MFAScreen> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 6),
                             Text(
                               'AVAILABLE IN 0:59',
                               style: TextStyle(
@@ -222,20 +221,18 @@ class _MFAScreenState extends State<MFAScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 36),
 
-                      /// Verify Button
+                      /// Verify button (MATCHES IMAGE)
                       SizedBox(
                         width: double.infinity,
+                        height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Navigator.pushReplacementNamed(context, '/dashboard');
-                          },
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(18),
                             ),
                             elevation: 6,
                           ),
@@ -244,6 +241,7 @@ class _MFAScreenState extends State<MFAScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -251,22 +249,22 @@ class _MFAScreenState extends State<MFAScreen> {
 
                       const SizedBox(height: 16),
 
-                      /// Security Footer
+                      /// Footer
                       Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
                             Icon(
                               Icons.verified_user,
-                              size: 18,
+                              size: 16,
                               color: Colors.grey,
                             ),
                             SizedBox(width: 6),
                             Text(
-                              'End-to-end encrypted e-voting system',
+                              'END-TO-END ENCRYPTED E-VOTING SYSTEM',
                               style: TextStyle(
-                                fontSize: 11,
-                                letterSpacing: 0.5,
+                                fontSize: 10,
+                                letterSpacing: 0.6,
                                 color: Colors.grey,
                                 fontWeight: FontWeight.bold,
                               ),
