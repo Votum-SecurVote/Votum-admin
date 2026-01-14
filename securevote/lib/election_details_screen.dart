@@ -329,7 +329,7 @@ class ElectionDetailsScreen extends StatelessWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: () {
-                // Navigator.pushNamed(context, '/ballot');
+                Navigator.pushNamed(context, '/ballot');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
