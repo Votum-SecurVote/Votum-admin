@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 8),
                         OutlinedButton(
                           onPressed: () {
-                            // Navigator.pushNamed(context, '/register');
+                            Navigator.pushNamed(context, '/register');
                           },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: primaryColor),
