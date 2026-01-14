@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const EVotingApp());
 }
 
@@ -20,7 +22,7 @@ class EVotingApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
-        // '/login': (context) => const LoginScreen(), // add later
+        '/login': (context) => const LoginScreen(),
       },
     );
   }
@@ -40,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Simulate app initialization
     Future.delayed(const Duration(seconds: 3), () {
-      // Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/login');
     });
   }
 
