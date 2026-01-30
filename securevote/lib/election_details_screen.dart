@@ -3,259 +3,233 @@ import 'package:flutter/material.dart';
 class ElectionDetailsScreen extends StatelessWidget {
   const ElectionDetailsScreen({super.key});
 
-  static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color textDark = Color(0xFF121516);
+  // Shared Palette
+  static const Color brandPrimary = Color(0xFF1A434E);
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color bgCanvas = Color(0xFFFFFFFF);
+  static const Color textMain = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color cardBorder = Color(0xFFE5E7EB);
+  static const Color successGreen = Color(0xFF059669);
+  static const Color successBg = Color(0xFFECFDF5);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgCanvas,
 
-      /// Bottom Action Bar
+      // 1. Transparent AppBar
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: textMain,
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+        title: const Text(
+          "ELECTION DETAILS",
+          style: TextStyle(
+            color: brandPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ),
+
+      // 2. Bottom Action Bar
       bottomNavigationBar: _buildBottomBar(context),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// Top App Bar
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: primaryColor,
-                    ),
-                    onPressed: () => Navigator.pop(context),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 3. Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                  const Expanded(
-                    child: Text(
-                      'Election Details',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
+                  decoration: BoxDecoration(
+                    color: successBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: successGreen.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.circle, size: 8, color: successGreen),
+                      SizedBox(width: 8),
+                      Text(
+                        'Active Now',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: successGreen,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 40),
-                ],
-              ),
-            ),
+                ),
 
-            /// Scrollable Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 140),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 16),
+
+                // 4. Main Title
+                const Text(
+                  '2025 General Presidential Election',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // 5. Timer Row (Clean Pill)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: brandPrimary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.timer_outlined, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'Time Remaining:  2 Days, 14 Hours',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // 6. Dates Grid
+                Row(
                   children: [
-                    /// Status
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 3,
-                                backgroundColor: Colors.green,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'ACTIVE',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'ID: #GEN-2024-001',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                    _infoCard(
+                      label: 'Opens',
+                      value: 'Oct 24, 2025',
+                      sub: '08:00 AM EST',
                     ),
-
-                    const SizedBox(height: 16),
-
-                    /// Title
-                    const Text(
-                      '2024 General Presidential Election',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
-                      ),
+                    const SizedBox(width: 16),
+                    _infoCard(
+                      label: 'Closes',
+                      value: 'Oct 26, 2025',
+                      sub: '08:00 PM EST',
                     ),
+                  ],
+                ),
 
-                    const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                    /// Dates Grid
-                    Row(
-                      children: [
-                        _infoCard(
-                          icon: Icons.calendar_today,
-                          title: 'Start Date',
-                          value: 'Oct 24, 2024',
-                          sub: '08:00 AM EST',
-                        ),
-                        const SizedBox(width: 12),
-                        _infoCard(
-                          icon: Icons.event_busy,
-                          title: 'End Date',
-                          value: 'Oct 26, 2024',
-                          sub: '08:00 PM EST',
-                        ),
-                      ],
-                    ),
+                const Divider(height: 1, color: cardBorder),
 
-                    const SizedBox(height: 12),
+                const SizedBox(height: 32),
 
-                    /// Remaining
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'REMAINING',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  letterSpacing: 1.2,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                '2 Days, 14 Hours',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Icon(Icons.timer, color: Colors.white, size: 28),
-                        ],
-                      ),
-                    ),
+                // 7. Rules Section
+                const Text(
+                  'Important Regulations',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Please review the requirements before voting.',
+                  style: TextStyle(fontSize: 14, color: textSecondary),
+                ),
 
-                    const SizedBox(height: 32),
+                const SizedBox(height: 16),
 
-                    /// Rules
-                    const Text(
-                      'Voting Rules and Regulations',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Please review the following legal requirements before proceeding to the digital ballot box.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                _accordion(
+                  title: 'Eligibility Verified',
+                  content:
+                      'Your identity (ID: #GEN-2025) has been confirmed against the national registry.',
+                ),
+                _accordion(
+                  title: 'Single Vote Policy',
+                  content:
+                      'You may only submit one ballot. Once cast, your decision is final and cannot be amended.',
+                ),
+                _accordion(
+                  title: 'Anonymity Guarantee',
+                  content:
+                      'Your vote is decoupled from your identity using Zero-Knowledge Proof encryption.',
+                ),
 
-                    const SizedBox(height: 16),
+                const SizedBox(height: 40),
 
-                    _accordion(
-                      icon: Icons.how_to_reg,
-                      title: 'Eligibility Requirements',
-                      content:
-                          'You must be a registered citizen aged 18 or older. '
-                          'Valid government ID verification is required.',
-                    ),
-                    _accordion(
-                      icon: Icons.security,
-                      title: 'Confidentiality Notice',
-                      content:
-                          'All votes are end-to-end encrypted and anonymous. '
-                          'Zero-knowledge proofs ensure auditability.',
-                    ),
-                    _accordion(
-                      icon: Icons.filter_1,
-                      title: 'One-vote Policy',
-                      content:
-                          'Each voter is allowed exactly one submission. '
-                          'Once cast, ballots cannot be changed.',
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    /// Help
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Row(
+                // 8. Help Box
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.help_outline, color: textSecondary),
+                      const SizedBox(width: 12),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.info, color: primaryColor),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Need assistance?',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Contact 24/7 support at 1-800-VOTE-HELP.',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ],
+                          const Text(
+                            'Having trouble?',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: textMain,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Contact support at 1-800-VOTE-HELP',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondary.withOpacity(0.8),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 100), // Space for bottom bar
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  /// Components
-  static Widget _infoCard({
-    required IconData icon,
-    required String title,
+  Widget _infoCard({
+    required String label,
     required String value,
     required String sub,
   }) {
@@ -263,103 +237,135 @@ class ElectionDetailsScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: primaryColor),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: textSecondary,
+                letterSpacing: 1.0,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textMain,
+              ),
             ),
-            Text(sub, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 2),
+            Text(
+              sub,
+              style: const TextStyle(fontSize: 12, color: textSecondary),
+            ),
           ],
         ),
       ),
     );
   }
 
-  static Widget _accordion({
-    required IconData icon,
-    required String title,
-    required String content,
-  }) {
-    return ExpansionTile(
-      tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-      leading: Icon(icon, color: Colors.grey),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Text(
-            content,
-            style: const TextStyle(color: Colors.grey, height: 1.4),
+  Widget _accordion({required String title, required String content}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: textMain,
           ),
         ),
-      ],
-    );
-  }
-
-  static Widget _buildBottomBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+        iconColor: textSecondary,
+        collapsedIconColor: textSecondary,
         children: [
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/ballot');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              content,
+              style: const TextStyle(
+                color: textSecondary,
+                fontSize: 14,
+                height: 1.5,
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Proceed to Ballot',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Securely signed by Federal Election Commission',
-            style: TextStyle(
-              fontSize: 10,
-              letterSpacing: 1.2,
-              color: Colors.grey,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: cardBorder)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushNamed(context, '/ballot'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: brandPrimary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Access Digital Ballot',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.lock,
+                  size: 12,
+                  color: textSecondary.withOpacity(0.5),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Signed by Federal Election Commission',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textSecondary.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
