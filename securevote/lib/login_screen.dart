@@ -10,251 +10,196 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
   bool showPassword = false;
 
-  static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color institutionalGray = Color(0xFFF8F9FA);
-  static const Color charcoal = Color(0xFF344760);
+  // Modernized Palette
+  static const Color brandPrimary = Color(0xFF1A434E); // Deep Slate Teal
+  static const Color accentBlue = Color(0xFF3B82F6); // Trust Blue
+  static const Color bgCanvas = Color(0xFFFFFFFF);
+  static const Color textMain = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF6B7280);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  /// Top App Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.shield, color: primaryColor, size: 32),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'National E-Voting Portal',
-                            textAlign: TextAlign.center,
+      backgroundColor: bgCanvas,
+      body: Stack(
+        children: [
+          // Background Aesthetic Decoration
+          Positioned(
+            top: -100,
+            right: -50,
+            child: CircleAvatar(
+              radius: 150,
+              backgroundColor: accentBlue.withOpacity(0.05),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+
+                      // Brand Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: brandPrimary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.account_balance_rounded,
+                              color: brandPrimary,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'VOTE.GOV',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: charcoal,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: brandPrimary,
                             ),
                           ),
-                        ),
-                        SizedBox(width: 32),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
 
-                  /// Hero Image
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: SizedBox(
-                        height: 160,
-                        child: Image.network(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuA_aFChmGAF5X40KAR6V6XVCtd3-vysEmFexz1jmDRb23mSJ6ccivLSfZxAnvt1CA-HbL66znHzqRUxJOqRcyAWN5vyBnScRmhO3REcqFwPsFc0dnXtZS6CqHwCK1j3pjJ5eqV4c4wuHoSGDncQTB55rb4bhh41oA7-TRMSsgHIA7ro99rIbiwlVkQGmdugQ3lMt3P3O_SZsh6_0KFWMF02UoqxvVhr4yUFPiu-82kxJ8625M_mTZcTwYDwWy9eDjv5pgqqTt6WY69K',
-                          fit: BoxFit.cover,
+                      const SizedBox(height: 48),
+
+                      // Welcome Text
+                      const Text(
+                        'Secure Identity\nVerification',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: textMain,
+                          height: 1.2,
                         ),
                       ),
-                    ),
-                  ),
-
-                  /// Title & Description
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
-                    child: Text(
-                      'Secure Login',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: charcoal,
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Access your digital ballot box using your government-issued credentials.',
+                        style: TextStyle(fontSize: 16, color: textSecondary),
                       ),
-                    ),
-                  ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      'Authenticate your identity to cast your official ballot in the current session.',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF6A7881)),
-                    ),
-                  ),
+                      const SizedBox(height: 40),
 
-                  /// Login Card
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: institutionalGray,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE5E7EB)),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildField(
-                          label: 'Voter Email Address',
-                          controller: emailController,
-                          hint: 'e.g. voter@domain.gov',
-                          icon: Icons.mail_outline,
-                        ),
+                      // Input Fields
+                      _buildModernField(
+                        label: 'Voter Email',
+                        controller: emailController,
+                        hint: 'name@email.gov',
+                        icon: Icons.alternate_email_rounded,
+                      ),
 
-                        _buildField(
-                          label: 'Secure PIN or Password',
-                          controller: passwordController,
-                          hint: '••••••••',
-                          icon: showPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          obscure: !showPassword,
-                          onIconTap: () {
-                            setState(() {
-                              showPassword = !showPassword;
-                            });
-                          },
-                        ),
+                      const SizedBox(height: 20),
 
-                        /// Forgot password
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {},
-                            child: const Text(
-                              'Forgot Access Details?',
-                              style: TextStyle(color: primaryColor),
+                      _buildModernField(
+                        label: 'Security Pin',
+                        controller: passwordController,
+                        hint: '••••••••',
+                        icon: showPassword
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                        obscure: !showPassword,
+                        onIconTap: () =>
+                            setState(() => showPassword = !showPassword),
+                      ),
+
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {},
+                          child: const Text(
+                            'Reset Access',
+                            style: TextStyle(
+                              color: accentBlue,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
+                      ),
 
-                        /// Login button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/mfa');
-                            },
-                            icon: const Icon(Icons.login),
-                            label: const Text('Sign In to Vote'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      const SizedBox(height: 24),
+
+                      // Primary Action
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pushNamed(context, '/mfa'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: brandPrimary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        /// Security Divider
-                        Row(
-                          children: const [
-                            Expanded(child: Divider()),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                'SECURITY VERIFIED',
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Continue to Ballot',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  letterSpacing: 1.5,
-                                  color: Colors.grey,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            Expanded(child: Divider()),
-                          ],
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, size: 20),
+                            ],
+                          ),
                         ),
+                      ),
 
-                        const SizedBox(height: 12),
+                      const SizedBox(height: 40),
 
-                        /// Encryption text
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.lock, size: 16, color: Colors.grey),
-                            SizedBox(width: 6),
-                            Text(
-                              'End-to-end encrypted connection',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey,
+                      // Footer Registration
+                      Center(
+                        child: Column(
+                          children: [
+                            const Text(
+                              "New to digital voting?",
+                              style: TextStyle(color: textSecondary),
+                            ),
+                            TextButton(
+                              onPressed: () {},
+                              child: const Text(
+                                'Register for Digital ID',
+                                style: TextStyle(
+                                  color: textMain,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  /// Register section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Don't have a digital voter ID?",
-                          style: TextStyle(color: Color(0xFF6A7881)),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/register');
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: primaryColor),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Register as a New Voter',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  /// Footer
-                  const Padding(
-                    padding: EdgeInsets.only(top: 32),
-                    child: Text(
-                      'Official Government Application • v2.4.0',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 1.5,
-                        color: Colors.grey,
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildField({
+  Widget _buildModernField({
     required String label,
     required TextEditingController controller,
     required String hint,
@@ -262,36 +207,48 @@ class _LoginScreenState extends State<LoginScreen> {
     bool obscure = false,
     VoidCallback? onIconTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label.toUpperCase(),
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: charcoal,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: textSecondary,
+              letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: controller,
-            obscureText: obscure,
-            decoration: InputDecoration(
-              hintText: hint,
-              suffixIcon: IconButton(icon: Icon(icon), onPressed: onIconTap),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: primaryColor),
-              ),
+        ),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFFF3F4F6),
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.grey),
+            suffixIcon: IconButton(
+              icon: Icon(icon, size: 20, color: textSecondary),
+              onPressed: onIconTap,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: brandPrimary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
