@@ -9,9 +9,14 @@ class MFAScreen extends StatefulWidget {
 }
 
 class _MFAScreenState extends State<MFAScreen> {
-  static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color textDark = Color(0xFF344760);
-  static const Color borderGray = Color(0xFFDDE1E3);
+  // Shared Palette
+  static const Color brandPrimary = Color(0xFF1A434E);
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color bgCanvas = Color(0xFFFFFFFF);
+  static const Color textMain = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color inputFill = Color(0xFFF9FAFB);
+  static const Color inputBorder = Color(0xFFE5E7EB);
 
   final List<TextEditingController> controllers = List.generate(
     6,
@@ -30,6 +35,10 @@ class _MFAScreenState extends State<MFAScreen> {
     if (v.isNotEmpty && i < 5) {
       focusNodes[i + 1].requestFocus();
     }
+    // Optional: Auto-submit if last digit is filled
+    if (v.isNotEmpty && i == 5) {
+      FocusScope.of(context).unfocus();
+    }
   }
 
   void _onBackspace(int i) {
@@ -42,247 +51,235 @@ class _MFAScreenState extends State<MFAScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth > 390
-                ? 390.0
-                : constraints.maxWidth;
+      backgroundColor: bgCanvas,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: textMain,
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+        title: const Text(
+          "VOTE.GOV",
+          style: TextStyle(
+            color: brandPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.0,
+          ),
+        ),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 24),
 
-            return Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: width,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // 1. Icon Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: brandPrimary.withOpacity(0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.security_rounded,
+                    size: 40,
+                    color: brandPrimary,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 2. Title & Description
+                const Text(
+                  'Verify Identity',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: textSecondary,
+                    ),
                     children: [
-                      /// Top bar
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const Expanded(
-                            child: Text(
-                              'Security Verification',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: textDark,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 40),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      /// Title
-                      const Text(
-                        'MFA Verification',
+                      const TextSpan(text: 'Enter the secure code sent to\n'),
+                      TextSpan(
+                        text: 'j***@example.gov',
                         style: TextStyle(
-                          fontSize: 28,
+                          color: textMain,
                           fontWeight: FontWeight.bold,
-                          color: textDark,
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      /// Description
-                      RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.5,
-                            color: Color(0xFF6A7881),
-                          ),
-                          children: [
-                            TextSpan(
-                              text:
-                                  'A 6-digit code was sent to your registered email ',
-                            ),
-                            TextSpan(
-                              text: '(j***@example.com)',
-                              style: TextStyle(
-                                color: primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            TextSpan(
-                              text:
-                                  '. Please enter it below to cast your ballot.',
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      /// OTP boxes (NO OVERFLOW)
-                      Center(
-                        child: Wrap(
-                          spacing: 8, // horizontal spacing
-                          runSpacing: 8, // vertical spacing (if wraps)
-                          alignment: WrapAlignment.center,
-                          children: List.generate(6, (i) {
-                            return SizedBox(
-                              width: 44, // slightly reduced width
-                              height: 54,
-                              child: RawKeyboardListener(
-                                focusNode: FocusNode(),
-                                onKey: (e) {
-                                  if (e.isKeyPressed(
-                                    LogicalKeyboardKey.backspace,
-                                  )) {
-                                    _onBackspace(i);
-                                  }
-                                },
-                                child: TextField(
-                                  controller: controllers[i],
-                                  focusNode: focusNodes[i],
-                                  autofocus: i == 0,
-                                  maxLength: 1,
-                                  textAlign: TextAlign.center,
-                                  keyboardType: TextInputType.number,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  decoration: InputDecoration(
-                                    counterText: '',
-                                    hintText: '•',
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: borderGray,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: const BorderSide(
-                                        color: primaryColor,
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  onChanged: (v) => _onChanged(v, i),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      /// Resend
-                      Center(
-                        child: Column(
-                          children: const [
-                            Text.rich(
-                              TextSpan(
-                                text: "Didn't receive a code? ",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF6A7881),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Resend OTP',
-                                    style: TextStyle(
-                                      color: primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'AVAILABLE IN 0:59',
-                              style: TextStyle(
-                                fontSize: 11,
-                                letterSpacing: 1.5,
-                                color: Color(0xFF9AA4AA),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      /// Verify button (MATCHES IMAGE)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/dashboard',
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            elevation: 6,
-                          ),
-                          child: const Text(
-                            'Verify Identity',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      /// Footer
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.verified_user,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'END-TO-END ENCRYPTED E-VOTING SYSTEM',
-                              style: TextStyle(
-                                fontSize: 10,
-                                letterSpacing: 0.6,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                          backgroundColor: brandPrimary.withOpacity(0.05),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+
+                const SizedBox(height: 40),
+
+                // 3. OTP Fields
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: List.generate(6, (i) {
+                    return SizedBox(
+                      width: 48,
+                      height: 56,
+                      child: RawKeyboardListener(
+                        focusNode: FocusNode(),
+                        onKey: (e) {
+                          if (e.isKeyPressed(LogicalKeyboardKey.backspace)) {
+                            _onBackspace(i);
+                          }
+                        },
+                        child: TextField(
+                          controller: controllers[i],
+                          focusNode: focusNodes[i],
+                          autofocus: i == 0,
+                          maxLength: 1,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: brandPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            counterText: '',
+                            filled: true,
+                            fillColor: inputFill,
+                            contentPadding: EdgeInsets.zero,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: inputBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: brandPrimary,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          onChanged: (v) => _onChanged(v, i),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+
+                const SizedBox(height: 32),
+
+                // 4. Timer & Resend
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.timer_outlined,
+                      size: 16,
+                      color: textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      '00:59',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Container(width: 1, height: 16, color: inputBorder),
+                    const SizedBox(width: 16),
+                    TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: accentBlue,
+                      ),
+                      child: const Text(
+                        'Resend Code',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 48),
+
+                // 5. Main Action
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/dashboard'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: brandPrimary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Verify Securely',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 6. Security Footer
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.lock,
+                      size: 12,
+                      color: textSecondary.withOpacity(0.5),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'End-to-end encrypted session',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
         ),
       ),
     );
