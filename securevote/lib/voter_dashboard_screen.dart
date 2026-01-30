@@ -3,382 +3,357 @@ import 'package:flutter/material.dart';
 class VoterDashboardScreen extends StatelessWidget {
   const VoterDashboardScreen({super.key});
 
-  static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color bgLight = Color(0xFFF8F9FA);
-  static const Color surface = Colors.white;
-  static const Color textDark = Color(0xFF121516);
+  // Shared Palette (Consistent with Login/Registration)
+  static const Color brandPrimary = Color(0xFF1A434E);
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color bgCanvas = Color(0xFFFFFFFF);
+  static const Color textMain = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color cardBorder = Color(0xFFE5E7EB);
+  static const Color successGreen = Color(0xFF059669);
+  static const Color successBg = Color(0xFFECFDF5);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgLight,
-
-      /// Bottom Navigation
-      bottomNavigationBar: _buildBottomNav(),
-
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// Top App Bar
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.dashboard, color: primaryColor),
-                      SizedBox(width: 8),
-                      Text(
-                        'Dashboard',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textDark,
+      backgroundColor: bgCanvas,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading:
+            false, // Hides back button if coming from login
+        title: const Text(
+          "VOTE.GOV",
+          style: TextStyle(
+            color: brandPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.0,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: brandPrimary.withOpacity(0.1),
+              child: const Icon(Icons.person, size: 20, color: brandPrimary),
+            ),
+          ),
+        ],
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Welcome Section
+                const Text(
+                  'Welcome, John',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: successBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: successGreen.withOpacity(0.2),
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: const [
-                      Icon(Icons.notifications_none),
-                      SizedBox(width: 12),
-                      CircleAvatar(radius: 16, backgroundColor: Colors.grey),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            /// Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// Welcome
-                    const Text(
-                      'AUTHORIZED ACCESS',
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.check_circle,
+                            size: 14,
+                            color: successGreen,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Identity Verified',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: successGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'ID: 982-114-55',
                       style: TextStyle(
                         fontSize: 12,
-                        letterSpacing: 1.5,
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
+                        color: textSecondary.withOpacity(0.8),
+                        fontFamily: 'Monospace',
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Welcome, John Doe',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    /// Identity Badge
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.verified_user,
-                                size: 14,
-                                color: Colors.green,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Identity Verified',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Voter ID: 123456789',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    /// Stats
-                    Row(
-                      children: [
-                        _statCard('Active Elections', '02', primaryColor),
-                        const SizedBox(width: 12),
-                        _statCard('Completed', '14', textDark),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    /// Active Elections
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          'Active Elections',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Showing 2 of 2',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _electionCard(
-                      context: context,
-                      title: '2024 Presidential Election',
-                      date: 'Oct 20 — Nov 5, 2024',
-                      description:
-                          'Official national election for the executive branch.',
-                      tag: 'National',
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _electionCard(
-                      context: context,
-                      title: 'City Council - District 4',
-                      date: 'Nov 1 — Nov 10, 2024',
-                      description:
-                          'Local representative election for your district.',
-                      tag: 'Local',
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    /// Security Footer
-                    Column(
-                      children: const [
-                        Icon(Icons.lock, size: 20, color: Colors.grey),
-                        SizedBox(height: 4),
-                        Text(
-                          'END-TO-END ENCRYPTED',
-                          style: TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 1.5,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Server: SECURE-NODE-04 | Session: AES-256',
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
+
+                const SizedBox(height: 32),
+
+                // 2. Quick Stats Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        label: 'Active Ballots',
+                        value: '02',
+                        icon: Icons.how_to_vote_outlined,
+                        isPrimary: true,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        label: 'Voted History',
+                        value: '14',
+                        icon: Icons.history,
+                        isPrimary: false,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 40),
+
+                // 3. Active Elections Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Active Ballots',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textMain,
+                      ),
+                    ),
+                    Text(
+                      'Closing Soon',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange[800],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // 4. Election Cards
+                _buildElectionCard(
+                  context,
+                  title: '2025 Presidential Election',
+                  date: 'Due by Nov 5, 2025',
+                  tag: 'NATIONAL',
+                  description: 'Federal executive branch election.',
+                ),
+
+                const SizedBox(height: 16),
+
+                _buildElectionCard(
+                  context,
+                  title: 'City Council - District 4',
+                  date: 'Due by Nov 10, 2025',
+                  tag: 'LOCAL',
+                  description: 'Representative for your specific district.',
+                ),
+
+                const SizedBox(height: 48),
+
+                // 5. Security Footer
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.lock_outline,
+                        size: 16,
+                        color: textSecondary.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'SECURE CONNECTION | AES-256',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                          color: textSecondary.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  /// Components
-  static Widget _statCard(String title, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget _electionCard({
-    required BuildContext context,
-    required String title,
-    required String date,
-    required String description,
-    required String tag,
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required bool isPrimary,
   }) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface,
+        color: isPrimary ? brandPrimary : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: isPrimary ? null : Border.all(color: cardBorder),
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: brandPrimary.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 140,
-            alignment: Alignment.topLeft,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.15),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                tag.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+          Icon(
+            icon,
+            color: isPrimary ? Colors.white70 : textSecondary,
+            size: 20,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isPrimary ? Colors.white : textMain,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isPrimary ? Colors.white70 : textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildElectionCard(
+    BuildContext context, {
+    required String title,
+    required String date,
+    required String tag,
+    required String description,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: brandPrimary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    tag,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: brandPrimary,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(date, style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 12),
-                Text(description),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/election');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'View & Vote',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: textSecondary.withOpacity(0.5),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Bottom Nav
-  static Widget _buildBottomNav() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: const [
-          _NavItem(Icons.how_to_reg, 'Voter', true),
-          _NavItem(Icons.admin_panel_settings, 'Admin', false),
-          _NavItem(Icons.fact_check, 'Auditor', false),
-          _NavItem(Icons.visibility, 'Observer', false),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const _NavItem(this.icon, this.label, this.active);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          size: 28,
-          color: active ? VoterDashboardScreen.primaryColor : Colors.grey,
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textMain,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              date,
+              style: const TextStyle(
+                fontSize: 13,
+                color: textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pushNamed(context, '/election'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: brandPrimary,
+                  side: const BorderSide(color: cardBorder),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'View & Vote',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: active ? VoterDashboardScreen.primaryColor : Colors.grey,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
