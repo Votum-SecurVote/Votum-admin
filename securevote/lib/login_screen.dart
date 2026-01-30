@@ -174,7 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(color: textSecondary),
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/register'),
                               child: const Text(
                                 'Register for Digital ID',
                                 style: TextStyle(
