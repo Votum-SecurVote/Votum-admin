@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for status bar control
 import 'package:securevote/ballot_screen.dart';
 import 'package:securevote/election_details_screen.dart';
 import 'package:securevote/mfa_screen.dart';
@@ -9,6 +10,13 @@ import 'login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Set status bar to transparent for full-screen gradient effect
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
   runApp(const EVotingApp());
 }
 
@@ -21,9 +29,17 @@ class EVotingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Secure E-Voting System',
       theme: ThemeData(
+        useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
         fontFamily: 'PublicSans',
+        // Modern Color Scheme
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1A3B5D), // Deep Navy
+          primary: const Color(0xFF1A3B5D),
+          secondary: const Color(0xFF0096C7), // Trust Blue
+          background: const Color(0xFFF8F9FA),
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
       ),
       initialRoute: '/',
       routes: {
@@ -47,130 +63,214 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   @override
   void initState() {
     super.initState();
 
-    // Simulate app initialization
+    // Initialize Animation Controller
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5), // Start slightly below
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _controller.forward();
+
+    // Navigate after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF2C5F81);
+    // Defined localized colors for the splash
+    const primaryDeep = Color(0xFF1A3B5D);
+    const primaryLight = Color(0xFFF0F4F8);
 
     return Scaffold(
-      body: Column(
-        children: [
-          /// Main content
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  /// Logo + circles
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 192,
-                        height: 192,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withOpacity(0.05),
-                          ),
+      // Gradient Background for a premium feel
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              const Color(0xFFE3F2FD), // Very light blue
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Animated Logo Stack
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Outer Ripple (Static for now, could be animated)
+                            Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: primaryDeep.withOpacity(0.05),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 160,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: primaryDeep.withOpacity(0.1),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            // Main Icon Background
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryDeep.withOpacity(0.15),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.how_to_vote_rounded, // Better icon
+                                  size: 64,
+                                  color: primaryDeep,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Container(
-                        width: 128,
-                        height: 128,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.verified_user,
-                          size: 84,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 40),
+                        const SizedBox(height: 48),
 
-                  /// Title
-                  const Text(
-                    'Secure E-Voting\nSystem',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+                        // Title Text
+                        Column(
+                          children: [
+                            const Text(
+                              'SecureVote',
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                                color: primaryDeep,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'E-VOTING SYSTEM',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 3.0,
+                                color: primaryDeep.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  Container(
-                    width: 48,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
 
-          /// Footer
-          Padding(
-            padding: const EdgeInsets.only(bottom: 64),
-            child: Column(
-              children: const [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: primaryColor,
-                  ),
+            // Footer Section
+            Padding(
+              padding: const EdgeInsets.only(bottom: 50),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  children: [
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: primaryDeep,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'ESTABLISHING SECURE CONNECTION',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: primaryDeep.withOpacity(0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.lock_outline,
+                          size: 12,
+                          color: primaryDeep.withOpacity(0.4),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Encrypted • Verified • Safe',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: primaryDeep.withOpacity(0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                SizedBox(height: 12),
-                Text(
-                  'INITIALIZING SECURE PROTOCOL',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C5F81),
-                  ),
-                ),
-                SizedBox(height: 32),
-                Text(
-                  'National Election Authority • v1.0.0',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF6A7881)),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
