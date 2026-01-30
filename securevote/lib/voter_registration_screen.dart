@@ -9,13 +9,14 @@ class VoterRegistrationScreen extends StatefulWidget {
 }
 
 class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
-  // Shared Palette (From Login Screen)
-  static const Color brandPrimary = Color(0xFF1A434E); // Deep Slate Teal
-  static const Color accentBlue = Color(0xFF3B82F6); // Trust Blue
+  // Shared Palette (Consistent with Login)
+  static const Color brandPrimary = Color(0xFF1A434E);
+  static const Color accentBlue = Color(0xFF3B82F6);
   static const Color bgCanvas = Color(0xFFFFFFFF);
-  static const Color textMain = Color(0xFF1F2937);
+  static const Color textMain = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
-  static const Color inputFill = Color(0xFFF3F4F6);
+  static const Color inputFill = Color(0xFFF9FAFB);
+  static const Color inputBorder = Color(0xFFE5E7EB);
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
@@ -26,336 +27,242 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgCanvas,
-      body: Stack(
-        children: [
-          // 1. Background Decoration (Consistent with Login)
-          Positioned(
-            top: -100,
-            right: -50,
-            child: CircleAvatar(
-              radius: 150,
-              backgroundColor: accentBlue.withOpacity(0.05),
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: textMain,
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+        title: const Text(
+          "VOTE.GOV",
+          style: TextStyle(
+            color: brandPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.0,
           ),
+        ),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Title Section
+                const Text(
+                  'Registration',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Complete your profile to access your ballot.',
+                  style: TextStyle(fontSize: 15, color: textSecondary),
+                ),
 
-          SafeArea(
-            child: Center(
-              // 2. Responsive Constraint
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
+                const SizedBox(height: 24),
+
+                // 2. Status Badge (Clean Pill Style)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, size: 8, color: Colors.orange[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Status: Application Pending",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[900],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // 3. Form Fields
+                _buildSimpleField(
+                  controller: nameController,
+                  label: 'Full Legal Name',
+                  hint: 'Jane Marie Doe',
+                  icon: Icons.person_outline_rounded,
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildSimpleField(
+                  controller: dobController,
+                  label: 'Date of Birth',
+                  hint: 'MM / DD / YYYY',
+                  icon: Icons.calendar_today_rounded,
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildSimpleField(
+                  controller: addressController,
+                  label: 'Residential Address',
+                  hint: 'Street, City, State, Zip',
+                  icon: Icons.location_on_outlined,
+                  maxLines: 3,
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildSimpleField(
+                  controller: govIdController,
+                  label: 'Government ID Number',
+                  hint: 'Passport or ID Number',
+                  icon: Icons.badge_outlined,
+                ),
+
+                const SizedBox(height: 32),
+
+                // 4. Security Note
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 3. Custom App Bar
-                    _buildAppBar(context),
-
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 16,
+                      color: brandPrimary,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-
-                            // 4. Status Card
-                            _buildStatusCard(),
-
-                            const SizedBox(height: 32),
-
-                            // 5. Section Header
-                            const Text(
-                              'Personal Information',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: textMain,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Ensure all details match your legal documentation exactly.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                                height: 1.4,
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // 6. Form Fields
-                            _buildModernField(
-                              label: 'Full Legal Name',
-                              controller: nameController,
-                              hint: 'ex. Jane Marie Doe',
-                              icon: Icons.person_outline_rounded,
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            _buildModernField(
-                              label: 'Date of Birth',
-                              controller: dobController,
-                              hint: 'MM/DD/YYYY',
-                              icon: Icons.calendar_today_rounded,
-                              isDate: true,
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            _buildModernField(
-                              label: 'Residential Address',
-                              controller: addressController,
-                              hint: 'Street, City, State, Zip',
-                              icon: Icons.location_on_outlined,
-                              maxLines: 3,
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            _buildModernField(
-                              label: 'Government ID Number',
-                              controller: govIdController,
-                              hint: 'ID or Passport Number',
-                              icon: Icons.badge_outlined,
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // 7. Security Badge
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: brandPrimary.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: brandPrimary.withOpacity(0.1),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.lock_outline_rounded,
-                                    color: brandPrimary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Data encrypted with 256-bit security. Only shared with electoral boards.',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: brandPrimary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 32),
-
-                            // 8. Submit Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: brandPrimary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Submit Application',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            Center(
-                              child: TextButton(
-                                onPressed: () {},
-                                child: const Text(
-                                  "View Requirements",
-                                  style: TextStyle(color: textSecondary),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 40),
-                          ],
+                      child: Text(
+                        'Your data is encrypted with 256-bit security and is only shared with official electoral boards.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary.withOpacity(0.8),
+                          height: 1.4,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            style: IconButton.styleFrom(
-              backgroundColor: inputFill,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: textMain,
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              'Registration',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: textMain,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 48), // Balance the back button space
-        ],
-      ),
-    );
-  }
+                const SizedBox(height: 32),
 
-  Widget _buildStatusCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: inputFill),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: brandPrimary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.pending_actions_rounded,
-              color: brandPrimary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'STATUS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: textSecondary.withOpacity(0.7),
-                    letterSpacing: 1.2,
+                // 5. Submit Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: brandPrimary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Submit Application',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Not Submitted',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: brandPrimary,
+
+                const SizedBox(height: 16),
+
+                // 6. Secondary Link
+                Center(
+                  child: TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      "View Requirements",
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildModernField({
-    required String label,
+  Widget _buildSimpleField({
     required TextEditingController controller,
+    required String label,
     required String hint,
     required IconData icon,
     int maxLines = 1,
-    bool isDate = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: textSecondary,
-              letterSpacing: 1.1,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textMain,
           ),
         ),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          keyboardType: isDate ? TextInputType.datetime : TextInputType.text,
+          style: const TextStyle(fontSize: 15, color: textMain),
           decoration: InputDecoration(
             filled: true,
             fillColor: inputFill,
             hintText: hint,
-            hintStyle: TextStyle(color: textSecondary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             suffixIcon: Padding(
               padding: EdgeInsets.only(
-                right: 12,
+                right: 8,
+                // Align icon to top if multiline
                 top: maxLines > 1 ? 12 : 0,
                 bottom: maxLines > 1 ? 40 : 0,
               ),
               child: Icon(icon, size: 20, color: textSecondary),
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: inputBorder),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: brandPrimary, width: 2),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: maxLines > 1 ? 20 : 18,
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: brandPrimary, width: 1.5),
             ),
           ),
         ),
