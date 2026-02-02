@@ -2,222 +2,266 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class VoteConfirmationScreen extends StatelessWidget {
-  const VoteConfirmationScreen({super.key});
+  final String candidateName;
+  final String party;
 
-  static const Color primaryColor = Color(0xFF2C5F81);
-  static const Color successGreen = Color(0xFF4CAF50);
-  static const Color textDark = Color(0xFF121516);
+  const VoteConfirmationScreen({
+    super.key,
+    this.candidateName = "Senator Alexandra Reed",
+    this.party = "Democratic Party",
+  });
+
+  // Colors
+  static const Color brandPrimary = Color(0xFF1A434E);
+  static const Color textMain = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color successGreen = Color(0xFF059669);
+  static const Color bgCanvas = Color(0xFFF9FAFB);
+  static const Color cardBorder = Color(0xFFE5E7EB);
 
   final String receiptHash =
       '8f3a2b1c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d1e';
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return WillPopScope(
+      onWillPop: () async => false, // 🔒 Disable back
+      child: Scaffold(
+        backgroundColor: bgCanvas,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // 🔽 SCROLLABLE CONTENT (FIXES OVERFLOW)
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  child: Column(
+                    children: [
+                      // Success Icon
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_rounded,
+                          size: 64,
+                          color: successGreen,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// Top Bar
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: primaryColor),
-                    onPressed: () => Navigator.pop(context),
+                      const Text(
+                        "Vote Successfully Submitted",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: textMain,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Your ballot is encrypted and permanently recorded.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: textSecondary),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // RECEIPT CARD
+                      _buildReceiptCard(context),
+                    ],
                   ),
-                  const Expanded(
-                    child: Text(
-                      'Vote Confirmation',
-                      textAlign: TextAlign.center,
+                ),
+              ),
+
+              // 🔽 FIXED BOTTOM BUTTON
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard',
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: brandPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Return to Dashboard",
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: textDark,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40),
-                ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ================= RECEIPT CARD =================
+
+  Widget _buildReceiptCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: const BoxDecoration(
+              color: brandPrimary,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: const Text(
+              "DIGITAL VOTE RECEIPT",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+                color: Colors.white,
               ),
             ),
+          ),
 
-            /// Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 32, 16, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    /// Success Icon
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: successGreen.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_circle,
-                        size: 64,
-                        color: successGreen,
-                      ),
-                    ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Text(
+                  candidateName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  party.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                  ),
+                ),
 
-                    const SizedBox(height: 24),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
 
-                    /// Title
-                    const Text(
-                      'Vote Successfully Cast',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
-                      ),
-                    ),
+                _infoRow("Election", "2024 General"),
+                _infoRow("Date", "Oct 24, 2024"),
+                _infoRow("Time", "09:41 AM"),
 
-                    const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
-                    /// Description
-                    const Text(
-                      'Your ballot has been securely encrypted and recorded '
-                      'in the digital ballot box.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Color(0xFF6A7881)),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    /// Receipt Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // HASH BOX
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: bgCanvas,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                'RECEIPT HASH',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Icon(Icons.verified_user, color: primaryColor),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
-                            ),
-                            child: Text(
-                              receiptHash,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 12,
-                                height: 1.4,
-                                color: Color(0xFF344760),
-                              ),
+                          const Text(
+                            "RECEIPT HASH",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: textSecondary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Clipboard.setData(
-                                  ClipboardData(text: receiptHash),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Receipt hash copied'),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.content_copy),
-                              label: const Text('Copy Receipt Hash'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(
+                                ClipboardData(text: receiptHash),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Hash copied")),
+                              );
+                            },
+                            child: const Text(
+                              "COPY",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: brandPrimary,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    /// Instruction
-                    const Text(
-                      'Please save this receipt hash. You can use it to verify '
-                      'that your vote was counted correctly during the audit phase.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFF6A7881),
+                      const SizedBox(height: 8),
+                      SelectableText(
+                        receiptHash,
+                        maxLines: null,
+                        style: const TextStyle(
+                          fontFamily: 'Courier',
+                          fontSize: 11,
+                          height: 1.4,
+                          color: textMain,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            /// Bottom Action
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/dashboard',
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    ],
                   ),
-                  child: const Text('Back to Dashboard'),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: textSecondary)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: textMain,
+            ),
+          ),
+        ],
       ),
     );
   }
