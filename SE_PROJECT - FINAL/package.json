@@ -1,0 +1,12 @@
+{
+    "name": "epic1-verification",
+    "version": "1.0.0",
+    "description": "Verification script for EPIC-1 Migration",
+    "main": "verify_epic1.js",
+    "scripts": {
+        "verify": "node verify_epic1.js"
+    },
+    "dependencies": {
+        "axios": "^1.6.0"
+    }
+}
