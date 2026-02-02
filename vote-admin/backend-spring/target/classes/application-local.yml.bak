@@ -1,0 +1,6 @@
+# Optional overrides when running locally (no profile needed if using default)
+# Example: DATABASE_URL not set → uses PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
+
+spring:
+  jpa:
+    show-sql: true

@@ -1,38 +1,40 @@
 import asyncHandler from 'express-async-handler';
-import Ballot from '../models/Ballot.js';
-import Election from '../models/Election.js';
+import * as ballotRepo from '../repositories/ballotRepo.js';
+import * as electionRepo from '../repositories/electionRepo.js';
 import auditService from '../services/auditService.js';
 
-// @desc    Get all ballot versions for an election (ADMIN only)
-// @route   GET /api/elections/:electionId/ballots
+/**
+ * @desc    Get all ballot versions for an election (ADMIN only)
+ * @route   GET /api/elections/:electionId/ballots
+ */
 export const getElectionBallots = asyncHandler(async (req, res) => {
   const { electionId } = req.params;
 
-  const election = await Election.findById(electionId);
+  const election = await electionRepo.getById(electionId);
   if (!election) {
     res.status(404);
     throw new Error('Election not found');
   }
 
-  const ballots = await Ballot.find({ electionId })
-    .sort({ version: 1 })
-    .lean();
+  const ballots = await ballotRepo.getByElection(electionId);
 
   res.json({ success: true, data: ballots });
 });
 
-// @desc    Publish a specific ballot version
-// @route   POST /api/ballots/:ballotId/publish
+/**
+ * @desc    Publish a specific ballot version
+ * @route   POST /api/ballots/:ballotId/publish
+ */
 export const publishBallot = asyncHandler(async (req, res) => {
   const { ballotId } = req.params;
 
-  const ballot = await Ballot.findById(ballotId);
+  const ballot = await ballotRepo.getById(ballotId);
   if (!ballot) {
     res.status(404);
     throw new Error('Ballot not found');
   }
 
-  const election = await Election.findById(ballot.electionId);
+  const election = await electionRepo.getById(ballot.election_id);
   if (!election) {
     res.status(404);
     throw new Error('Election not found');
@@ -43,45 +45,39 @@ export const publishBallot = asyncHandler(async (req, res) => {
     throw new Error('Ballot must have at least 2 candidates');
   }
 
-  // Do not allow publishing for ended elections
-  if (new Date() > new Date(election.endDate)) {
+  // Do not allow publishing after election end
+  if (new Date() > new Date(election.end_date)) {
     res.status(400);
     throw new Error('Cannot publish ballot for an ended election');
   }
 
-  // Only one published ballot per election
-  await Ballot.updateMany(
-    { electionId: ballot.electionId, isPublished: true },
-    { isPublished: false }
-  );
+  // Ensure only one published ballot per election
+  await ballotRepo.unpublishAll(ballot.election_id);
+  await ballotRepo.publish(ballotId);
 
-  ballot.isPublished = true;
-  await ballot.save();
-
-  // Sync election with this ballot's options for fast read access
-  election.candidates = ballot.options.map((opt, index) => ({
-    id: opt._id?.toString() || `candidate_${index}`,
+  // Sync election candidates for fast reads
+  const candidates = ballot.options.map((opt, index) => ({
+    id: opt.id || `candidate_${index}`,
     name: opt.name,
     party: opt.party || '',
     description: opt.description || '',
-    order: typeof opt.order === 'number' ? opt.order : index,
+    order: index,
   }));
 
-  election.isPublished = true;
   const now = new Date();
-  if (now >= new Date(election.endDate)) {
-    election.status = 'ended';
-  } else if (now >= new Date(election.startDate)) {
-    election.status = 'active';
-  } else {
-    election.status = 'published';
-  }
+  let status = 'published';
+  if (now >= new Date(election.end_date)) status = 'ended';
+  else if (now >= new Date(election.start_date)) status = 'active';
 
-  await election.save();
+  await electionRepo.update(election.id, {
+    candidates,
+    is_published: true,
+    status,
+  });
 
-  auditService.log('BALLOT_PUBLISHED', {
-    electionId: election._id,
-    ballotId: ballot._id,
+  await auditService.log('BALLOT_PUBLISHED', {
+    electionId: election.id,
+    ballotId,
     version: ballot.version,
     performedBy: req.user?.id || 'UNKNOWN',
   });
@@ -89,48 +85,47 @@ export const publishBallot = asyncHandler(async (req, res) => {
   res.json({ success: true, data: ballot });
 });
 
-// @desc    Unpublish the currently published ballot
-// @route   POST /api/ballots/:ballotId/unpublish
+/**
+ * @desc    Unpublish the currently published ballot
+ * @route   POST /api/ballots/:ballotId/unpublish
+ */
 export const unpublishBallot = asyncHandler(async (req, res) => {
   const { ballotId } = req.params;
 
-  const ballot = await Ballot.findById(ballotId);
+  const ballot = await ballotRepo.getById(ballotId);
   if (!ballot) {
     res.status(404);
     throw new Error('Ballot not found');
   }
 
-  const election = await Election.findById(ballot.electionId);
+  const election = await electionRepo.getById(ballot.election_id);
   if (!election) {
     res.status(404);
     throw new Error('Election not found');
   }
 
   // Cannot unpublish after election start
-  if (new Date() >= new Date(election.startDate)) {
+  if (new Date() >= new Date(election.start_date)) {
     res.status(400);
     throw new Error('Cannot unpublish ballot after election has started');
   }
 
-  ballot.isPublished = false;
-  await ballot.save();
+  // Unpublish this ballot
+  await ballotRepo.unpublishAll(ballot.election_id);
 
-  // If there are no other published ballots, mark election as draft
-  const otherPublishedCount = await Ballot.countDocuments({
-    electionId: ballot.electionId,
-    isPublished: true,
-  });
+  const remainingPublished = await ballotRepo.countPublished(ballot.election_id);
 
-  if (otherPublishedCount === 0) {
-    election.isPublished = false;
-    election.status = 'draft';
-    election.candidates = [];
-    await election.save();
+  if (remainingPublished === 0) {
+    await electionRepo.update(election.id, {
+      is_published: false,
+      status: 'draft',
+      candidates: [],
+    });
   }
 
-  auditService.log('BALLOT_UNPUBLISHED', {
-    electionId: election._id,
-    ballotId: ballot._id,
+  await auditService.log('BALLOT_UNPUBLISHED', {
+    electionId: election.id,
+    ballotId,
     version: ballot.version,
     performedBy: req.user?.id || 'UNKNOWN',
   });
@@ -138,9 +133,11 @@ export const unpublishBallot = asyncHandler(async (req, res) => {
   res.json({ success: true, data: ballot });
 });
 
-// @desc    Rollback published ballot to a previous version
-// @route   POST /api/ballots/:ballotId/rollback
-// @body    { targetVersion: Number }
+/**
+ * @desc    Rollback published ballot to a previous version
+ * @route   POST /api/ballots/:ballotId/rollback
+ * @body    { targetVersion: Number }
+ */
 export const rollbackBallot = asyncHandler(async (req, res) => {
   const { ballotId } = req.params;
   const { targetVersion } = req.body;
@@ -150,69 +147,53 @@ export const rollbackBallot = asyncHandler(async (req, res) => {
     throw new Error('targetVersion is required');
   }
 
-  const current = await Ballot.findById(ballotId);
+  const current = await ballotRepo.getById(ballotId);
   if (!current) {
     res.status(404);
     throw new Error('Ballot not found');
   }
 
-  const election = await Election.findById(current.electionId);
+  const election = await electionRepo.getById(current.election_id);
   if (!election) {
     res.status(404);
     throw new Error('Election not found');
   }
 
-  // Admin can rollback published elections if there's a discrepancy
-  // Only prevent rollback for ended elections
-  if (new Date() > new Date(election.endDate)) {
+  // Prevent rollback after election end
+  if (new Date() > new Date(election.end_date)) {
     res.status(400);
     throw new Error('Cannot rollback after election has ended');
   }
 
-  const target = await Ballot.findOne({
-    electionId: current.electionId,
-    version: targetVersion,
-  });
+  const target = await ballotRepo.getByVersion(
+    current.election_id,
+    targetVersion
+  );
 
   if (!target) {
     res.status(404);
     throw new Error(`Ballot version ${targetVersion} not found`);
   }
 
-  // Mark all ballots unpublished and publish target
-  await Ballot.updateMany(
-    { electionId: current.electionId, isPublished: true },
-    { isPublished: false }
-  );
+  await ballotRepo.unpublishAll(current.election_id);
+  await ballotRepo.publish(target.id);
 
-  target.isPublished = true;
-  await target.save();
-
-  // Sync election candidates from target
-  election.candidates = target.options.map((opt, index) => ({
-    id: opt._id?.toString() || `candidate_${index}`,
+  const candidates = (target.options || []).map((opt, index) => ({
+    id: opt.id || `candidate_${index}`,
     name: opt.name,
     party: opt.party || '',
     description: opt.description || '',
-    order: typeof opt.order === 'number' ? opt.order : index,
+    order: index,
   }));
-  election.isPublished = true;
-  
-  // Update status based on current time
-  const now = new Date();
-  if (now >= new Date(election.endDate)) {
-    election.status = 'ended';
-  } else if (now >= new Date(election.startDate)) {
-    election.status = 'active';
-  } else {
-    election.status = 'published';
-  }
-  
-  await election.save();
 
-  auditService.log('BALLOT_ROLLBACK', {
-    electionId: election._id,
-    ballotId: target._id,
+  await electionRepo.update(election.id, {
+    candidates,
+    is_published: true,
+  });
+
+  await auditService.log('BALLOT_ROLLBACK', {
+    electionId: election.id,
+    ballotId: target.id,
     version: target.version,
     performedBy: req.user?.id || 'UNKNOWN',
   });

@@ -1,27 +1,28 @@
 import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { Navigate, Outlet } from 'react-router-dom';
 
-// Protect /admin/* routes so that only ADMIN role can access them.
-// Non-admins (VOTER / OBSERVER / unauthenticated) are redirected
-// to the public elections view.
 const AdminRoute = () => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+  const stored = localStorage.getItem('auth');
 
-  if (loading) return null;
-
-  if (!user || user.role !== 'ADMIN') {
-    return (
-      <Navigate
-        to="/elections/public"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
+  if (!stored) {
+    // ❌ No login at all
+    return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  try {
+    const { token, role } = JSON.parse(stored);
+
+    // ❌ Token or role missing
+    if (!token || role !== 'ADMIN') {
+      return <Navigate to="/login" replace />;
+    }
+
+    // ✅ Logged in admin → allow access
+    return <Outlet />;
+  } catch (err) {
+    // ❌ Corrupted storage
+    return <Navigate to="/login" replace />;
+  }
 };
 
 export default AdminRoute;

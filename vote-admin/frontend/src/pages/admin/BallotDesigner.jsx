@@ -1,88 +1,158 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import styled from 'styled-components';
-import { 
-  FiPlus, FiTrash2, FiEdit2, FiSave, 
-  FiUser, FiType, FiList, FiCheck 
+import {
+  FiPlus, FiTrash2, FiSave, FiUser, FiList, FiCheck,
+  FiRefreshCw, FiInfo, FiChevronDown
 } from 'react-icons/fi';
 import electionService from '../../services/electionService';
 import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
 
+/* -------------------- Styled Components -------------------- */
+
 const PageContainer = styled.div`
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
 `;
 
 const Header = styled.div`
   margin-bottom: 2rem;
-  
+
   h1 {
     font-size: 2rem;
+    color: #1e293b;
     margin-bottom: 0.5rem;
-    background: linear-gradient(90deg, var(--primary), var(--info));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
-  
+
   p {
-    color: var(--text-secondary);
+    color: #64748b;
+    font-size: 1rem;
+  }
+`;
+
+const Card = styled(motion.div)`
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+`;
+
+const InfoBanner = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: ${(p) => (p.$type === 'warning' ? '#fef3c7' : '#dbeafe')};
+  border-left: 4px solid ${(p) => (p.$type === 'warning' ? '#f59e0b' : '#2563eb')};
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: ${(p) => (p.$type === 'warning' ? '#d97706' : '#1d4ed8')};
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 44px;
+
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
   }
 `;
 
 const Controls = styled.div`
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
+  align-items: center;
 `;
 
 const Button = styled(motion.button)`
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-md);
-  border: none;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  transition: all var(--transition-normal);
-  
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
   &.primary {
-    background: var(--primary);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
-    
-    &:hover:not(:disabled) {
-      background: var(--primary-hover);
-    }
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
   }
-  
-  &.secondary {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    
-    &:hover {
-      background: var(--bg-hover);
-    }
+
+  &.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
   }
-  
+
   &.success {
-    background: var(--success);
+    background: linear-gradient(135deg, #16a34a, #15803d);
     color: white;
-    
-    &:hover {
-      opacity: 0.9;
-    }
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
   }
-  
+
+  &.success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+  }
+
+  &.secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #e2e8f0;
+  }
+
+  &.secondary:hover:not(:disabled) {
+    background: #e2e8f0;
+  }
+
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none !important;
   }
+`;
+
+const VersionBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
 `;
 
 const CandidateList = styled(Reorder.Group)`
@@ -90,697 +160,462 @@ const CandidateList = styled(Reorder.Group)`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 2rem;
+  padding: 0;
+  margin: 0;
 `;
 
 const CandidateItem = styled(Reorder.Item)`
   list-style: none;
-  position: relative;
-  
-  &.editing {
-    .candidate-content {
-      border-color: var(--primary);
-      box-shadow: var(--shadow-glow);
-    }
+`;
+
+const CandidateCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #cbd5e1;
   }
 `;
 
-const CandidateCard = styled(motion.div)`
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--border-color);
+const AddCandidateForm = styled.div`
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
   padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  cursor: grab;
-  
-  &:hover {
-    border-color: var(--primary);
-  }
-  
-  &:active {
-    cursor: grabbing;
-  }
-`;
-
-const DragHandle = styled.div`
-  color: var(--text-muted);
-  font-size: 1.25rem;
-  cursor: grab;
-  padding: 0.5rem;
-  
-  &:hover {
-    color: var(--primary);
-  }
-`;
-
-const CandidateInfo = styled.div`
-  flex: 1;
-  
-  h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  p {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-`;
-
-const CandidateActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const IconButton = styled(motion.button)`
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  
-  &:hover {
-    background: var(--bg-hover);
-    color: var(--primary);
-  }
-  
-  &.delete:hover {
-    background: var(--danger);
-    color: white;
-    border-color: var(--danger);
-  }
-`;
-
-const AddCandidateForm = styled(motion.div)`
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--border-color);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  
-  h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-primary);
-  }
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const Label = styled.label`
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
 `;
 
 const Input = styled.input`
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  margin-bottom: 0.6rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: all var(--transition-normal);
-  
+
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #2563eb;
   }
 `;
 
 const TextArea = styled.textarea`
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 1rem;
-  min-height: 80px;
-  resize: vertical;
-  transition: all var(--transition-normal);
-  
+  min-height: 60px;
+
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #2563eb;
   }
-`;
-
-const EditForm = styled(motion.div)`
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  margin-top: 0.5rem;
-  border: 1px solid var(--border-color);
 `;
 
 const SuccessMessage = styled(motion.div)`
-  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  background: linear-gradient(135deg, #16a34a, #15803d);
   color: white;
-  padding: 2rem;
-  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
   text-align: center;
-  
+  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
+
   h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 0.95rem;
+  }
+
+  .version-saved {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+  }
+
+  .create-another {
+    margin-top: 1rem;
   }
 `;
 
+const ExistingVersions = styled.div`
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+
+  h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .version-chip {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #475569;
+  }
+
+  .version-chip.published {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 600;
+  }
+`;
+
+/* -------------------- Component -------------------- */
+
 const BallotDesigner = () => {
+  const [elections, setElections] = useState([]);
+  const [electionId, setElectionId] = useState(() => localStorage.getItem('lastElectionId') || '');
+  const [selectedElection, setSelectedElection] = useState(null);
+  const [ballots, setBallots] = useState([]);
+  const [nextVersion, setNextVersion] = useState(1);
+
   const [candidates, setCandidates] = useState([]);
-  const [editingId, setEditingId] = useState(null);
   const [newCandidate, setNewCandidate] = useState({ name: '', party: '', description: '' });
-  const [editingCandidate, setEditingCandidate] = useState({ name: '', party: '', description: '' });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [ballotId, setBallotId] = useState(null);
-  const [electionId] = useState(localStorage.getItem('lastElectionId') || '');
-  
-  // Load existing ballot (published if exists, otherwise latest draft)
+  const [success, setSuccess] = useState(null); // { version, ballotId }
+  const [loadError, setLoadError] = useState('');
+
+  /* Load admin elections */
   useEffect(() => {
-    if (!electionId) return;
-
-    (async () => {
+    let cancelled = false;
+    const load = async () => {
       try {
-        const res = await electionService.getElectionBallots(electionId);
-        const list = res.data || [];
-        if (list.length === 0) return;
-
-        const published = list.find((b) => b.isPublished);
-        const toEdit = published || list[list.length - 1];
-
-        if (!toEdit || !Array.isArray(toEdit.options)) return;
-
-        setBallotId(toEdit._id);
-        setCandidates(
-          toEdit.options.map((opt, index) => ({
-            id: opt.id || opt._id || `candidate_${index}`,
-            name: opt.name,
-            party: opt.party || '',
-            description: opt.description || '',
-            order: typeof opt.order === 'number' ? opt.order : index,
-          }))
-        );
-      } catch (error) {
-        console.error('Error loading existing ballot:', error);
+        const res = await electionService.getAdminElections();
+        if (!cancelled && res.data?.length) {
+          setElections(res.data);
+          const id = electionId || res.data[0]._id;
+          setElectionId(id);
+          localStorage.setItem('lastElectionId', id);
+        }
+      } catch (e) {
+        if (!cancelled) setLoadError(e.message || 'Failed to load elections');
       }
-    })();
-  }, [electionId]);
-  
-  const addCandidate = () => {
-    const name = newCandidate.name.trim();
-    const party = newCandidate.party.trim();
-    
-    if (!name) {
-      alert('Candidate name is required');
-      return;
-    }
-    
-    if (!party) {
-      alert('Party name is required');
-      return;
-    }
-
-    // Prevent duplicate candidates with same name AND same party (case-insensitive)
-    const exists = candidates.some(
-      (c) => 
-        c.name.trim().toLowerCase() === name.toLowerCase() &&
-        c.party.trim().toLowerCase() === party.toLowerCase()
-    );
-    if (exists) {
-      alert('Invalid ballot: Duplicate candidate with same name and same party name. Please enter again.');
-      return;
-    }
-    
-    const candidate = {
-      id: `candidate_${Date.now()}`,
-      name,
-      party,
-      description: newCandidate.description.trim(),
-      order: candidates.length
     };
-    
-    setCandidates([...candidates, candidate]);
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  /* When electionId changes, load election details and ballots */
+  useEffect(() => {
+    if (!electionId) {
+      setSelectedElection(null);
+      setBallots([]);
+      setNextVersion(1);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [electionRes, ballotsRes] = await Promise.all([
+          electionService.getAdminElections(),
+          electionService.getElectionBallots(electionId),
+        ]);
+        if (cancelled) return;
+        const list = electionRes.data || [];
+        const el = list.find((e) => (e._id || e.id) === electionId);
+        setSelectedElection(el || null);
+        const ballotList = ballotsRes.data || [];
+        setBallots(ballotList);
+        const maxV = ballotList.length
+          ? Math.max(...ballotList.map((b) => b.version || 0))
+          : 0;
+        setNextVersion(maxV + 1);
+      } catch (e) {
+        if (!cancelled) {
+          setSelectedElection(null);
+          setBallots([]);
+          setNextVersion(1);
+        }
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [electionId]);
+
+  /* Redirect if no elections at all */
+  useEffect(() => {
+    if (!loadError && elections.length === 0 && !electionId) {
+      const t = setTimeout(() => {
+        alert('No election selected. Please create an election first.');
+        window.location.href = '/admin/election/create';
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [elections.length, electionId, loadError]);
+
+  const isDraft = selectedElection
+    ? (selectedElection.isPublished ?? selectedElection.is_published) === false
+    : true;
+
+  const addCandidate = () => {
+    if (!newCandidate.name?.trim() || !newCandidate.party?.trim()) {
+      alert('Candidate name and party are required');
+      return;
+    }
+    setCandidates([
+      ...candidates,
+      { ...newCandidate, id: Date.now().toString() },
+    ]);
     setNewCandidate({ name: '', party: '', description: '' });
   };
-  
-  const removeCandidate = (id) => {
-    setCandidates(candidates.filter(c => c.id !== id));
-    if (editingId === id) setEditingId(null);
-  };
-  
-  const startEditing = (candidate) => {
-    setEditingId(candidate.id);
-    setEditingCandidate({
-      name: candidate.name,
-      party: candidate.party || '',
-      description: candidate.description || ''
-    });
-  };
-  
-  const saveEdit = () => {
-    const name = editingCandidate.name.trim();
-    const party = editingCandidate.party.trim();
-    
-    if (!name) {
-      alert('Candidate name is required');
-      return;
-    }
-    
-    if (!party) {
-      alert('Party name is required');
-      return;
-    }
 
-    // Prevent editing into a duplicate candidate (same name AND same party)
-    const exists = candidates.some(
-      (c) =>
-        c.id !== editingId &&
-        c.name.trim().toLowerCase() === name.toLowerCase() &&
-        c.party.trim().toLowerCase() === party.toLowerCase()
-    );
-    if (exists) {
-      alert('Invalid ballot: Duplicate candidate with same name and same party name. Please enter again.');
-      return;
-    }
-    
-    setCandidates(
-      candidates.map((c) =>
-        c.id === editingId
-          ? { ...c, name, party, description: editingCandidate.description.trim() }
-          : c
-      )
-    );
-    setEditingId(null);
+  const removeCandidate = (id) => {
+    setCandidates(candidates.filter((c) => c.id !== id));
   };
-  
-  const cancelEdit = () => {
-    setEditingId(null);
-  };
-  
+
   const saveBallot = async () => {
     if (candidates.length < 2) {
-      alert('Ballot must have at least 2 candidates');
+      alert('At least 2 candidates are required');
       return;
     }
-
-    // Validate all candidates have required fields
-    const invalidCandidates = candidates.filter(
-      (c) => !c.name?.trim() || !c.party?.trim()
-    );
-    if (invalidCandidates.length > 0) {
-      alert('All candidates must have both name and party');
-      return;
-    }
-
-    // Check for duplicates
-    const candidateKeys = candidates.map((c) => 
-      `${c.name.trim().toLowerCase()}_${c.party.trim().toLowerCase()}`
-    );
-    const hasDuplicates = new Set(candidateKeys).size !== candidateKeys.length;
-    if (hasDuplicates) {
-      alert('Invalid ballot: Duplicate candidate with same name and same party name. Please enter again.');
-      return;
-    }
-
     if (!electionId) {
-      alert('No election selected');
+      alert('Please select an election');
       return;
     }
-    
+    if (!isDraft) {
+      alert('Cannot create new ballot versions when the election is published. Unpublish the election first (from the View dashboard).');
+      return;
+    }
     setLoading(true);
-    
+    setSuccess(null);
     try {
-      const ballotData = {
-        title: `Ballot for Election ${electionId}`,
-        description: 'Ballot created via admin dashboard',
-        options: candidates.map((c, index) => ({
-          name: c.name.trim(),
-          party: c.party.trim(),
-          description: c.description?.trim() || '',
-          order: index
-        })),
-        maxSelections: 1
-      };
-      
-      const response = await electionService.createBallot(electionId, ballotData);
-      setBallotId(response.data._id);
-      setSuccess(true);
-      
-      // Clear form after success
-      setTimeout(() => {
-        setSuccess(false);
-        setCandidates([]);
-      }, 3000);
-    } catch (error) {
-      console.error('Error saving ballot:', error);
-      alert(`Error: ${error.message}`);
+      const res = await electionService.createBallot(electionId, {
+        title: `Ballot v${nextVersion}`,
+        options: candidates,
+        maxSelections: 1,
+      });
+      const data = res.data ?? res;
+      const id = data?.id;
+      const version = data?.version ?? nextVersion;
+      setSuccess({ version, ballotId: id });
+      setBallots((prev) => [...prev, { id, version, ...data }]);
+      setNextVersion(version + 1);
+      setCandidates([]);
+    } catch (err) {
+      alert(err.message || 'Failed to save ballot');
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const createAnotherVersion = () => {
+    setSuccess(null);
+  };
+
   const publishElection = async () => {
-    if (!electionId) {
-      alert('No election selected');
-      return;
-    }
-    
+    if (!electionId) return;
     try {
       await electionService.publishElection(electionId);
-      alert('Election published successfully!');
-    } catch (error) {
-      console.error('Error publishing election:', error);
-      alert(`Error: ${error.message}`);
+      alert('Election published successfully');
+      const res = await electionService.getAdminElections();
+      const list = res.data || [];
+      const el = list.find((e) => (e._id || e.id) === electionId);
+      setSelectedElection(el || null);
+    } catch (err) {
+      alert(err.message);
     }
   };
-  
+
+  if (loadError && elections.length === 0) {
+    return (
+      <PageContainer>
+        <Header>
+          <h1>Ballot Designer</h1>
+          <p>Create and manage ballot versions</p>
+        </Header>
+        <InfoBanner $type="warning">
+          <FiInfo />
+          <span>{loadError}</span>
+        </InfoBanner>
+        <Button className="secondary" onClick={() => window.location.href = '/admin/election/create'}>
+          Create an election first
+        </Button>
+      </PageContainer>
+    );
+  }
+
   if (loading) {
     return <Loader message="Saving ballot..." />;
   }
-  
+
   return (
     <PageContainer>
       <Header>
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          Ballot Designer
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          Design your ballot by adding, editing, and arranging candidates
-        </motion.p>
+        <h1>Ballot Designer</h1>
+        <p>Create and manage ballot versions for an election</p>
       </Header>
-      
+
+      <Card>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
+          Select election
+        </label>
+        <Select
+          value={electionId}
+          onChange={(e) => {
+            setElectionId(e.target.value);
+            localStorage.setItem('lastElectionId', e.target.value);
+          }}
+        >
+          <option value="">-- Choose election --</option>
+          {elections.map((e) => (
+            <option key={e._id ?? e.id} value={e._id ?? e.id}>
+              {e.title} {e.isPublished || e.is_published ? '(Published)' : '(Draft)'}
+            </option>
+          ))}
+        </Select>
+
+        {selectedElection && (
+          <ExistingVersions>
+            <h4>
+              <FiList /> Existing ballot versions: {ballots.length}
+              {ballots.length > 0 && ` (next will be Version ${nextVersion})`}
+            </h4>
+            {ballots.map((b) => (
+              <span
+                key={b.id}
+                className={`version-chip ${b.isPublished ? 'published' : ''}`}
+                title={b.isPublished ? 'Currently published' : 'Draft'}
+              >
+                v{b.version} {b.isPublished ? '✓ Published' : ''}
+              </span>
+            ))}
+          </ExistingVersions>
+        )}
+      </Card>
+
+      {!isDraft && (
+        <InfoBanner $type="warning">
+          <FiInfo />
+          <span>
+            <strong>Election is published.</strong> New ballot versions can only be created when the election is in <strong>Draft</strong>. Unpublish the election from the <strong>View</strong> dashboard if you need to add more versions.
+          </span>
+        </InfoBanner>
+      )}
+
       <AnimatePresence>
         {success && (
           <SuccessMessage
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, ease: 'backOut' }}
-              style={{ display: 'inline-block', marginBottom: '1rem' }}
-            >
-              <FiCheck size={48} />
-            </motion.div>
-            <h3>Ballot Saved Successfully!</h3>
-            <p>Ballot ID: {ballotId}</p>
+            <h3>
+              <FiCheck size={24} /> Ballot saved
+            </h3>
+            <p className="version-saved">Version {success.version} created successfully.</p>
+            <p>You can publish or rollback this version from the View dashboard.</p>
+            <div className="create-another">
+              <Button className="secondary" onClick={createAnotherVersion}>
+                <FiRefreshCw /> Create another version
+              </Button>
+            </div>
           </SuccessMessage>
         )}
       </AnimatePresence>
-      
-      <Controls>
-        <Button
-          className="primary"
-          onClick={() => {
-            if (!newCandidate.name.trim()) {
-              document.getElementById('candidateName')?.focus();
-            } else if (!newCandidate.party.trim()) {
-              document.getElementById('candidateParty')?.focus();
-            } else {
-              addCandidate();
-            }
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiPlus /> Add Candidate
-        </Button>
-        
-        <Button
-          className="success"
-          onClick={saveBallot}
-          disabled={candidates.length < 2}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiSave /> Save Ballot
-        </Button>
-        
-        {electionId && (
-          <Button
-            className="secondary"
-            onClick={publishElection}
-            disabled={candidates.length < 2}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiCheck /> Publish Election
+
+      <Card>
+        <Controls>
+          <Button className="primary" onClick={addCandidate}>
+            <FiPlus /> Add candidate
           </Button>
-        )}
-      </Controls>
-      
-      <AddCandidateForm
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <h3><FiUser /> New Candidate</h3>
-        
-        <FormGroup>
-          <Label><FiType /> Candidate Name *</Label>
+          <Button
+            className="success"
+            onClick={saveBallot}
+            disabled={candidates.length < 2 || !isDraft}
+          >
+            <FiSave /> Save as new version (Version {nextVersion})
+          </Button>
+          {selectedElection && (
+            <Button
+              className="secondary"
+              onClick={publishElection}
+              disabled={candidates.length < 2 || !isDraft}
+            >
+              <FiCheck /> Publish election
+            </Button>
+          )}
+        </Controls>
+
+        <AddCandidateForm>
+          <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#334155' }}>New candidate</h3>
           <Input
-            id="candidateName"
-            type="text"
+            placeholder="Name"
             value={newCandidate.name}
-            onChange={(e) => setNewCandidate({...newCandidate, name: e.target.value})}
-            placeholder="Enter candidate name"
-            onKeyPress={(e) => e.key === 'Enter' && addCandidate()}
+            onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
           />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FiUser /> Party Name *</Label>
           <Input
-            id="candidateParty"
-            type="text"
+            placeholder="Party"
             value={newCandidate.party}
-            onChange={(e) => setNewCandidate({...newCandidate, party: e.target.value})}
-            placeholder="Enter party name"
-            onKeyPress={(e) => e.key === 'Enter' && addCandidate()}
+            onChange={(e) => setNewCandidate({ ...newCandidate, party: e.target.value })}
           />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FiList /> Description (Optional)</Label>
           <TextArea
+            placeholder="Description (optional)"
             value={newCandidate.description}
-            onChange={(e) => setNewCandidate({...newCandidate, description: e.target.value})}
-            placeholder="Brief description or platform"
+            onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
           />
-        </FormGroup>
-        
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            className="secondary"
-            onClick={addCandidate}
-            disabled={!newCandidate.name.trim() || !newCandidate.party.trim()}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Add to Ballot
+          <Button className="secondary" onClick={addCandidate} style={{ marginTop: '0.5rem' }}>
+            <FiPlus /> Add to list
           </Button>
-        </div>
-      </AddCandidateForm>
-      
-      <AnimatePresence>
-        {candidates.length > 0 ? (
+        </AddCandidateForm>
+
+        {candidates.length === 0 ? (
+          <AnimatedCard>
+            <p style={{ color: '#64748b', margin: 0 }}>No candidates added yet. Add at least 2 to save a new version.</p>
+          </AnimatedCard>
+        ) : (
           <>
-            <motion.h3
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <FiList /> Candidates ({candidates.length})
-            </motion.h3>
-            
-            <CandidateList
-              axis="y"
-              values={candidates}
-              onReorder={setCandidates}
-            >
-              <AnimatePresence>
-                {candidates.map((candidate, index) => (
-                  <CandidateItem
-                    key={candidate.id}
-                    value={candidate}
-                    className={editingId === candidate.id ? 'editing' : ''}
-                  >
-                    <CandidateCard
-                      layout
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <DragHandle>
-                        ⋮⋮
-                      </DragHandle>
-                      
-                      <CandidateInfo>
-                        <h3>
-                          {candidate.name}
-                          <span style={{
-                            fontSize: '0.875rem',
-                            color: 'var(--text-muted)',
-                            fontWeight: 'normal'
-                          }}>
-                            #{index + 1}
-                          </span>
-                        </h3>
-                        {candidate.party && (
-                          <p style={{ color: 'var(--primary)', fontWeight: '500', marginBottom: '0.25rem' }}>
-                            {candidate.party}
-                          </p>
-                        )}
-                        {candidate.description && (
-                          <p>{candidate.description}</p>
-                        )}
-                      </CandidateInfo>
-                      
-                      <CandidateActions>
-                        {editingId === candidate.id ? (
-                          <>
-                            <IconButton
-                              onClick={saveEdit}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              <FiCheck />
-                            </IconButton>
-                            <IconButton
-                              onClick={cancelEdit}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              ✕
-                            </IconButton>
-                          </>
-                        ) : (
-                          <>
-                            <IconButton
-                              onClick={() => startEditing(candidate)}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              <FiEdit2 />
-                            </IconButton>
-                            <IconButton
-                              className="delete"
-                              onClick={() => removeCandidate(candidate.id)}
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              <FiTrash2 />
-                            </IconButton>
-                          </>
-                        )}
-                      </CandidateActions>
-                    </CandidateCard>
-                    
-                    {editingId === candidate.id && (
-                      <EditForm
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <FormGroup>
-                          <Label>Name *</Label>
-                          <Input
-                            type="text"
-                            value={editingCandidate.name}
-                            onChange={(e) => setEditingCandidate({
-                              ...editingCandidate,
-                              name: e.target.value
-                            })}
-                            autoFocus
-                          />
-                        </FormGroup>
-                        <FormGroup>
-                          <Label>Party *</Label>
-                          <Input
-                            type="text"
-                            value={editingCandidate.party}
-                            onChange={(e) => setEditingCandidate({
-                              ...editingCandidate,
-                              party: e.target.value
-                            })}
-                          />
-                        </FormGroup>
-                        <FormGroup>
-                          <Label>Description</Label>
-                          <TextArea
-                            value={editingCandidate.description}
-                            onChange={(e) => setEditingCandidate({
-                              ...editingCandidate,
-                              description: e.target.value
-                            })}
-                          />
-                        </FormGroup>
-                      </EditForm>
-                    )}
-                  </CandidateItem>
-                ))}
-              </AnimatePresence>
+            <p style={{ marginBottom: '0.75rem', fontWeight: 600, color: '#475569' }}>
+              Candidates in this version ({candidates.length})
+            </p>
+            <CandidateList axis="y" values={candidates} onReorder={setCandidates}>
+              {candidates.map((c) => (
+                <CandidateItem key={c.id} value={c}>
+                  <CandidateCard>
+                    <div>
+                      <strong>{c.name}</strong>
+                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{c.party}</div>
+                      {c.description && (
+                        <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                          {c.description}
+                        </div>
+                      )}
+                    </div>
+                    <Button className="secondary" onClick={() => removeCandidate(c.id)}>
+                      <FiTrash2 />
+                    </Button>
+                  </CandidateCard>
+                </CandidateItem>
+              ))}
             </CandidateList>
           </>
-        ) : (
-          <AnimatedCard>
-            <div style={{ textAlign: 'center', padding: '3rem' }}>
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: 'reverse'
-                }}
-                style={{ fontSize: '3rem', marginBottom: '1rem' }}
-              >
-                📋
-              </motion.div>
-              <h3>No Candidates Added Yet</h3>
-              <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                Start by adding candidates using the form above
-              </p>
-            </div>
-          </AnimatedCard>
         )}
-      </AnimatePresence>
+      </Card>
     </PageContainer>
   );
 };

@@ -12,7 +12,7 @@
     "express": "^4.22.1",
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.21.0"
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

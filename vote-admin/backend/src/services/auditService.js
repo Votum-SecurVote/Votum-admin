@@ -1,50 +1,16 @@
-class AuditService {
-  constructor() {
-    this.logs = [];
-  }
+import pool from '../lib/db.js';
 
-  log(action, details, userId = 'admin') {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
+const log = async (action, payload) => {
+  await pool.query(
+    `INSERT INTO audit_logs (action, entity_id, metadata, performed_by)
+     VALUES ($1, $2, $3::jsonb, $4)`,
+    [
       action,
-      userId,
-      details: typeof details === 'object' ? details : { message: details },
-      ip: '127.0.0.1' // In production, get from request
-    };
+      payload.electionId || payload.ballotId,
+      JSON.stringify(payload),
+      payload.performedBy,
+    ]
+  );
+};
 
-    this.logs.push(logEntry);
-    
-    // Log to console for development
-    console.log(`[AUDIT] ${action}:`, {
-      timestamp: logEntry.timestamp,
-      user: logEntry.userId,
-      details: logEntry.details
-    });
-
-    return logEntry;
-  }
-
-  getLogs(filter = {}) {
-    let filteredLogs = this.logs;
-    
-    if (filter.action) {
-      filteredLogs = filteredLogs.filter(log => log.action === filter.action);
-    }
-    
-    if (filter.startDate) {
-      filteredLogs = filteredLogs.filter(log => 
-        new Date(log.timestamp) >= new Date(filter.startDate)
-      );
-    }
-    
-    if (filter.endDate) {
-      filteredLogs = filteredLogs.filter(log => 
-        new Date(log.timestamp) <= new Date(filter.endDate)
-      );
-    }
-
-    return filteredLogs;
-  }
-}
-
-export default new AuditService();
+export default { log };

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { FiPlus, FiEdit, FiEye } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiLogIn, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const Nav = styled.nav`
@@ -90,9 +90,30 @@ const Tooltip = styled.div`
   box-shadow: var(--shadow-sm);
 `;
 
+const AuthButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  
+  &:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+`;
+
 const Navbar = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   
   const navItems = [
@@ -101,40 +122,66 @@ const Navbar = () => {
     { to: '/admin/election/view', icon: <FiEye />, label: 'View', admin: true },
   ];
   
+  const handleAuth = () => {
+    if (isAdmin) {
+      logout();
+      navigate('/elections/public');
+    } else {
+      navigate('/login');
+    }
+  };
+  
   return (
     <Nav>
       <NavContent>
         <Logo
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/elections/public')}
         >
           SecureVote Admin
         </Logo>
         
-        <NavLinks>
-          {navItems.map((item) => {
-            const disabled = item.admin && !isAdmin;
-            const active = location.pathname === item.to;
-            return (
-              <div key={item.to} style={{ position: 'relative' }}>
-                <NavLink
-                  to={item.to}
-                  className={active ? 'active' : ''}
-                  $disabled={disabled}
-                  title={disabled ? 'You do not have permission to perform this action' : undefined}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </NavLink>
-                {disabled && (
-                  <Tooltip>
-                    You do not have permission to perform this action
-                  </Tooltip>
-                )}
-              </div>
-            );
-          })}
-        </NavLinks>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <NavLinks>
+            {navItems.map((item) => {
+              const disabled = item.admin && !isAdmin;
+              const active = location.pathname === item.to;
+              return (
+                <div key={item.to} style={{ position: 'relative' }}>
+                  <NavLink
+                    to={item.to}
+                    className={active ? 'active' : ''}
+                    $disabled={disabled}
+                    title={disabled ? 'You do not have permission to perform this action' : undefined}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </NavLink>
+                  {disabled && (
+                    <Tooltip>
+                      You do not have permission to perform this action
+                    </Tooltip>
+                  )}
+                </div>
+              );
+            })}
+          </NavLinks>
+          
+          <AuthButton onClick={handleAuth}>
+            {isAdmin ? (
+              <>
+                <FiLogOut />
+                <span>Logout</span>
+              </>
+            ) : (
+              <>
+                <FiLogIn />
+                <span>Sign In</span>
+              </>
+            )}
+          </AuthButton>
+        </div>
       </NavContent>
     </Nav>
   );
