@@ -6,6 +6,7 @@ import 'package:securevote/mfa_screen.dart';
 import 'package:securevote/vote_confirmation_screen.dart';
 import 'package:securevote/voter_dashboard_screen.dart';
 import 'package:securevote/voter_registration_screen.dart';
+import 'package:securevote/VoterProfileScreen.dart';
 import 'login_screen.dart';
 
 void main() {
@@ -51,6 +52,7 @@ class EVotingApp extends StatelessWidget {
         '/election': (context) => const ElectionDetailsScreen(),
         '/ballot': (context) => const BallotScreen(),
         '/confirmation': (context) => const VoteConfirmationScreen(),
+        '/profile': (context) => const VoterProfileScreen(),
       },
     );
   }

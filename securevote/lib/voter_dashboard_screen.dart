@@ -35,9 +35,8 @@ class VoterDashboardScreen extends StatelessWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: brandPrimary.withOpacity(0.1),
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/profile'),
               child: const Icon(Icons.person, size: 20, color: brandPrimary),
             ),
           ),
