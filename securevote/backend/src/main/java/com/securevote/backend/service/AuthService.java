@@ -9,6 +9,9 @@ import com.securevote.backend.security.AadhaarHasher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.securevote.backend.dto.VoterLoginRequest;
+import java.util.Optional;
+
 @Service
 public class AuthService {
 
@@ -27,6 +30,20 @@ public class AuthService {
         this.identityRepository = identityRepository;
         this.passwordEncoder = passwordEncoder;
         this.aadhaarHasher = aadhaarHasher;
+    }
+
+    public User login(VoterLoginRequest req) {
+        Optional<User> userOpt = userRepository.findByEmail(req.getEmail());
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        return user;
     }
 
     public void register(VoterRegistrationRequest req, String aadhaarPdfPath, String profileImagePath) {

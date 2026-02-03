@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +15,58 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool showPassword = false;
+  bool isLoading = false;
+
+  Future<void> _login() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter valid credentials')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    // Dynamic Base URL Logic
+    String baseUrl = 'http://localhost:8080';
+    if (!kIsWeb) {
+      try {
+        if (Platform.isAndroid) {
+          baseUrl = 'http://10.0.2.2:8080';
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    final url = Uri.parse('$baseUrl/api/auth/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': emailController.text,
+          'password': passwordController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Success
+        Navigator.pushNamed(context, '/mfa');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login Failed: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   // Modernized Palette
   static const Color brandPrimary = Color(0xFF1A434E);
@@ -115,23 +171,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // Login Button
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/mfa'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandPrimary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandPrimary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Login',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
 
