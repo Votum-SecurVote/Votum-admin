@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 
 class VoterRegistrationScreen extends StatefulWidget {
   const VoterRegistrationScreen({super.key});
@@ -24,9 +26,27 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+
+  PlatformFile? aadhaarPdf;
 
   bool showPassword = false;
   bool showConfirmPassword = false;
+
+  Future<void> pickAadhaarPdf() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        aadhaarPdf = result.files.single;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +114,24 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                 const SizedBox(height: 20),
 
                 _buildSimpleField(
+                  controller: emailController,
+                  label: 'Email Address',
+                  hint: 'you@example.com',
+                  icon: Icons.email_outlined,
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildSimpleField(
+                  controller: phoneController,
+                  label: 'Phone Number',
+                  hint: '+91 XXXXX XXXXX',
+                  icon: Icons.phone_outlined,
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildSimpleField(
                   controller: addressController,
                   label: 'Residential Address',
                   hint: 'Street, City, State, Zip',
@@ -108,6 +146,63 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                   label: 'Aadhaar Number',
                   hint: '12-digit Aadhaar Number',
                   icon: Icons.badge_outlined,
+                ),
+
+                const SizedBox(height: 20),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Aadhaar Document (PDF)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textMain,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    OutlinedButton.icon(
+                      onPressed: pickAadhaarPdf,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Upload Masked Aadhaar PDF'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: const BorderSide(color: inputBorder),
+                      ),
+                    ),
+
+                    if (aadhaarPdf != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.picture_as_pdf,
+                            size: 18,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              aadhaarPdf!.name,
+                              style: const TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Upload masked Aadhaar (only last 4 digits visible)',
+                      style: TextStyle(fontSize: 11, color: textSecondary),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),
