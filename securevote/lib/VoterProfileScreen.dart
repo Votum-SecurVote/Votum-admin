@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class VoterProfileScreen extends StatelessWidget {
+class VoterProfileScreen extends StatefulWidget {
   const VoterProfileScreen({super.key});
 
+  @override
+  State<VoterProfileScreen> createState() => _VoterProfileScreenState();
+}
+
+class _VoterProfileScreenState extends State<VoterProfileScreen> {
   // Shared Palette
   static const Color brandPrimary = Color(0xFF1A434E);
   static const Color bgCanvas = Color(0xFFF9FAFB);
@@ -12,6 +22,63 @@ class VoterProfileScreen extends StatelessWidget {
   static const Color successGreen = Color(0xFF059669);
   static const Color successBg = Color(0xFFECFDF5);
   static const Color dangerRed = Color(0xFFDC2626);
+
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      if (userId == null) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'User not logged in';
+        });
+        return;
+      }
+
+      // Dynamic Base URL Logic (copied from LoginScreen for simplicity)
+      String baseUrl = 'http://localhost:8080';
+      if (!kIsWeb) {
+        try {
+          if (Platform.isAndroid) {
+            baseUrl = 'http://10.0.2.2:8080';
+          }
+        } catch (e) {
+          // Fallback
+        }
+      }
+
+      final url = Uri.parse('$baseUrl/api/auth/$userId');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          userData = jsonDecode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Failed to load profile: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,92 +104,109 @@ class VoterProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Profile Avatar Section
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 54,
-                      backgroundColor: brandPrimary.withOpacity(0.1),
-                      child: const Icon(Icons.person_rounded, size: 54, color: brandPrimary),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: const Icon(Icons.camera_alt, size: 18, color: textSecondary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'John Doe',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textMain),
-                ),
-                const SizedBox(height: 8),
-                _buildStatusChip(),
-                const SizedBox(height: 32),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMessage != null
+              ? Center(child: Text(errorMessage!))
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Profile Avatar Section
+                          Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              CircleAvatar(
+                                radius: 54,
+                                backgroundColor: brandPrimary.withOpacity(0.1),
+                                child: const Icon(
+                                  Icons.person_rounded,
+                                  size: 54,
+                                  color: brandPrimary,
+                                ),
+                              ),
+                              // Removing camera icon as user can't change it
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            userData?['fullName'] ?? 'User',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textMain,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildStatusChip(),
+                          const SizedBox(height: 32),
 
-                // Info Sections
-                _infoCard(
-                  title: 'Personal Information',
-                  children: [
-                    const _InfoRow('Email', 'john.doe@example.com'),
-                    const _InfoRow('Phone', '+91 98765 43210'),
-                    const _InfoRow('Date of Birth', '12 Aug 2001'),
-                    const _InfoRow('Gender', 'Male', isLast: true),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _infoCard(
-                  title: 'Address',
-                  children: [
-                    const _InfoRow(
-                      'Residential',
-                      '221B Baker Street, Chennai, TN, 600001',
-                      isLast: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _infoCard(
-                  title: 'Voter Details',
-                  children: [
-                    const _InfoRow('Voter ID', 'ABC1234567'),
-                    const _InfoRow('Registration', 'Active', isLast: true),
-                  ],
-                ),
-                const SizedBox(height: 32),
+                          // Info Sections
+                          _infoCard(
+                            title: 'Personal Information',
+                            children: [
+                              _InfoRow('Email', userData?['email'] ?? '-'),
+                              _InfoRow('Phone', userData?['phone'] ?? '-'),
+                              _InfoRow('Date of Birth', userData?['dateOfBirth'] ?? '-'),
+                              _InfoRow(
+                                'Gender',
+                                userData?['gender'] ?? '-',
+                                isLast: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _infoCard(
+                            title: 'Address',
+                            children: [
+                              _InfoRow(
+                                'Residential',
+                                userData?['address'] ?? '-',
+                                isLast: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _infoCard(
+                            title: 'Voter Details',
+                            children: [
+                              _InfoRow('Voter ID', userData?['userId'] ?? '-'),
+                              _InfoRow(
+                                'Status',
+                                userData?['status'] ?? 'Active',
+                                isLast: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
 
-                // Actions
-                _buildActionButton(
-                  label: 'Edit Profile',
-                  icon: Icons.edit_outlined,
-                  onPressed: () {},
-                  isPrimary: false,
+                          // Actions
+                          // Removed Edit Profile since user can't change
+                          const SizedBox(height: 12),
+                          _buildActionButton(
+                            label: 'Logout',
+                            icon: Icons.logout_rounded,
+                            onPressed: () {
+                              // Clear prefs if needed
+                              Navigator.pushReplacementNamed(context, '/login');
+                            },
+                            isPrimary: true,
+                            color: dangerRed,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                _buildActionButton(
-                  label: 'Logout',
-                  icon: Icons.logout_rounded,
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                  isPrimary: true,
-                  color: dangerRed,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

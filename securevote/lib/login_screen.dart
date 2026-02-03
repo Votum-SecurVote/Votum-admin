@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -53,7 +54,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         // Success
-        Navigator.pushNamed(context, '/mfa');
+        final data = jsonDecode(response.body);
+        final userId = data['userId'];
+        
+        // Save to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userId', userId);
+        
+        if (mounted) {
+           Navigator.pushNamed(context, '/mfa');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login Failed: ${response.body}')),

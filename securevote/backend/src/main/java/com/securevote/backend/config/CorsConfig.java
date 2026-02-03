@@ -14,7 +14,11 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // Allow Flutter Web on any localhost port
-        config.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        // Allow Flutter Web on any localhost port (IPv4 and IPv6/DNS)
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"

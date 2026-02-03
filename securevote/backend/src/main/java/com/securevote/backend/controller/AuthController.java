@@ -21,6 +21,16 @@ public class AuthController {
     }
 
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUser(@PathVariable java.util.UUID userId) {
+        try {
+            User user = authService.getUser(userId);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody VoterLoginRequest request) {
         try {

@@ -46,6 +46,12 @@ public class AuthService {
         return user;
     }
 
+
+    public User getUser(java.util.UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
     public void register(VoterRegistrationRequest req, String aadhaarPdfPath, String profileImagePath) {
 
         if (req.getPassword() == null || req.getConfirmPassword() == null) {
