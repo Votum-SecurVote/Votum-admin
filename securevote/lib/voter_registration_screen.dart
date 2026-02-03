@@ -36,6 +36,10 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
   bool showPassword = false;
   bool showConfirmPassword = false;
+  bool acceptTerms = false;
+  bool acceptPrivacy = false;
+  bool confirmEligibility = false;
+  bool confirmInformation = false;
 
   Future<void> pickAadhaarPdf() async {
     final result = await FilePicker.platform.pickFiles(
@@ -218,10 +222,73 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
                 const SizedBox(height: 32),
 
+                const Text(
+                  'Declarations & Consent',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: textMain,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                _buildCheckbox(
+                  value: acceptTerms,
+                  onChanged: (v) => setState(() => acceptTerms = v!),
+                  text: 'I accept the Terms & Conditions',
+                ),
+
+                _buildCheckbox(
+                  value: acceptPrivacy,
+                  onChanged: (v) => setState(() => acceptPrivacy = v!),
+                  text: 'I accept the Privacy Policy',
+                ),
+
+                _buildCheckbox(
+                  value: confirmEligibility,
+                  onChanged: (v) => setState(() => confirmEligibility = v!),
+                  text: 'I confirm that I am legally eligible to vote',
+                ),
+
+                _buildCheckbox(
+                  value: confirmInformation,
+                  onChanged: (v) => setState(() => confirmInformation = v!),
+                  text:
+                      'I confirm that all the information provided is true and correct',
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'False information or impersonation may lead to rejection or legal action.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      if (!acceptTerms ||
+                          !acceptPrivacy ||
+                          !confirmEligibility ||
+                          !confirmInformation) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please accept all declarations to proceed.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 18),
@@ -234,6 +301,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -362,4 +430,20 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
       ],
     );
   }
+}
+
+Widget _buildCheckbox({
+  required bool value,
+  required ValueChanged<bool?> onChanged,
+  required String text,
+}) {
+  return CheckboxListTile(
+    value: value,
+    onChanged: onChanged,
+    dense: true,
+    contentPadding: EdgeInsets.zero,
+    controlAffinity: ListTileControlAffinity.leading,
+    activeColor: const Color(0xFF1A434E),
+    title: Text(text, style: const TextStyle(fontSize: 13)),
+  );
 }
