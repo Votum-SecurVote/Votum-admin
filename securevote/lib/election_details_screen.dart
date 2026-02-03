@@ -3,138 +3,89 @@ import 'package:flutter/material.dart';
 class ElectionDetailsScreen extends StatelessWidget {
   const ElectionDetailsScreen({super.key});
 
-  // Shared Palette
+  // Shared Palette - Refined for higher contrast
   static const Color brandPrimary = Color(0xFF1A434E);
-  static const Color accentBlue = Color(0xFF3B82F6);
-  static const Color bgCanvas = Color(0xFFFFFFFF);
-  static const Color textMain = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color cardBorder = Color(0xFFE5E7EB);
-  static const Color successGreen = Color(0xFF059669);
+  static const Color bgCanvas = Color(0xFFF8FAFC); // Soft cool gray background
+  static const Color textMain = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color cardBorder = Color(0xFFE2E8F0);
+  static const Color successGreen = Color(0xFF10B981);
   static const Color successBg = Color(0xFFECFDF5);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgCanvas,
-
-      // 1. Transparent AppBar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: textMain,
-          onPressed: () => Navigator.pop(context),
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            color: textMain,
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
         centerTitle: true,
         title: const Text(
           "ELECTION DETAILS",
           style: TextStyle(
             color: brandPrimary,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2.0,
           ),
         ),
       ),
-
-      // 2. Bottom Action Bar
       bottomNavigationBar: _buildBottomBar(context),
-
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
+          constraints: const BoxConstraints(maxWidth: 500),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 3. Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: successBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: successGreen.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.circle, size: 8, color: successGreen),
-                      SizedBox(width: 8),
-                      Text(
-                        'Active Now',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: successGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // 1. Live Status Badge
+                _buildLiveBadge(),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-                // 4. Main Title
+                // 2. Main Title
                 const Text(
                   '2025 General Presidential Election',
                   style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
                     color: textMain,
-                    height: 1.2,
-                    letterSpacing: -0.5,
+                    height: 1.1,
+                    letterSpacing: -0.8,
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
-                // 5. Timer Row (Clean Pill)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: brandPrimary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.timer_outlined, color: Colors.white, size: 16),
-                      SizedBox(width: 8),
-                      Text(
-                        'Time Remaining:  2 Days, 14 Hours',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // 3. Countdown Card
+                _buildTimerCard(),
 
                 const SizedBox(height: 32),
 
-                // 6. Dates Grid
+                // 4. Dates Grid
                 Row(
                   children: [
                     _infoCard(
-                      label: 'Opens',
+                      icon: Icons.login_rounded,
+                      label: 'Polls Open',
                       value: 'Oct 24, 2025',
                       sub: '08:00 AM EST',
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     _infoCard(
-                      label: 'Closes',
+                      icon: Icons.logout_rounded,
+                      label: 'Polls Close',
                       value: 'Oct 26, 2025',
                       sub: '08:00 PM EST',
                     ),
@@ -142,23 +93,27 @@ class ElectionDetailsScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 32),
-
                 const Divider(height: 1, color: cardBorder),
-
                 const SizedBox(height: 32),
 
-                // 7. Rules Section
-                const Text(
-                  'Important Regulations',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textMain,
-                  ),
+                // 5. Regulations Section
+                const Row(
+                  children: [
+                    Icon(Icons.gavel_rounded, size: 20, color: brandPrimary),
+                    SizedBox(width: 10),
+                    Text(
+                      'Important Regulations',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textMain,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Please review the requirements before voting.',
+                  'Please review the legal requirements before casting your digital ballot.',
                   style: TextStyle(fontSize: 14, color: textSecondary),
                 ),
 
@@ -167,59 +122,25 @@ class ElectionDetailsScreen extends StatelessWidget {
                 _accordion(
                   title: 'Eligibility Verified',
                   content:
-                      'Your identity (ID: #GEN-2025) has been confirmed against the national registry.',
+                      'Your identity (ID: #GEN-2025) has been confirmed against the national registry. You are cleared to vote in this district.',
                 ),
                 _accordion(
                   title: 'Single Vote Policy',
                   content:
-                      'You may only submit one ballot. Once cast, your decision is final and cannot be amended.',
+                      'Strict one-person-one-vote policy. Once submitted, the cryptographic hash is generated and cannot be undone.',
                 ),
                 _accordion(
                   title: 'Anonymity Guarantee',
                   content:
-                      'Your vote is decoupled from your identity using Zero-Knowledge Proof encryption.',
+                      'We use AES-256 bit encryption and Zero-Knowledge Proofs to ensure your identity is never linked to your selection.',
                 ),
+
+                const SizedBox(height: 24),
+
+                // 6. Help Box
+                _buildHelpBox(),
 
                 const SizedBox(height: 40),
-
-                // 8. Help Box
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.help_outline, color: textSecondary),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Having trouble?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: textMain,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Contact support at 1-800-VOTE-HELP',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textSecondary.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 100), // Space for bottom bar
               ],
             ),
           ),
@@ -228,7 +149,84 @@ class ElectionDetailsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildLiveBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: successBg,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: successGreen.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: successGreen,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'ACTIVE NOW',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: successGreen,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimerCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: brandPrimary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: brandPrimary.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TIME REMAINING',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '2 Days : 14 Hours : 22 Mins',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'monospace', // Gives a digital clock feel
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _infoCard({
+    required IconData icon,
     required String label,
     required String value,
     required String sub,
@@ -237,34 +235,36 @@ class ElectionDetailsScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Icon(icon, size: 20, color: textSecondary),
+            const SizedBox(height: 12),
             Text(
               label.toUpperCase(),
               style: const TextStyle(
                 fontSize: 10,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
                 color: textSecondary,
-                letterSpacing: 1.0,
+                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: textMain,
               ),
             ),
-            const SizedBox(height: 2),
             Text(
               sub,
-              style: const TextStyle(fontSize: 12, color: textSecondary),
+              style: const TextStyle(fontSize: 11, color: textSecondary),
             ),
           ],
         ),
@@ -273,10 +273,15 @@ class ElectionDetailsScreen extends StatelessWidget {
   }
 
   Widget _accordion({required String title, required String content}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
       child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(side: BorderSide.none),
         title: Text(
           title,
           style: const TextStyle(
@@ -285,11 +290,9 @@ class ElectionDetailsScreen extends StatelessWidget {
             color: textMain,
           ),
         ),
-        iconColor: textSecondary,
-        collapsedIconColor: textSecondary,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
               content,
               style: const TextStyle(
@@ -304,68 +307,109 @@ class ElectionDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildHelpBox() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: cardBorder)),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/ballot'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: brandPrimary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Access Digital Ballot',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, size: 20),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        children: [
+          const CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Icon(Icons.support_agent, color: brandPrimary),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.lock,
-                  size: 12,
-                  color: textSecondary.withOpacity(0.5),
-                ),
-                const SizedBox(width: 6),
                 Text(
-                  'Signed by Federal Election Commission',
+                  'Need assistance?',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: textSecondary.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: textMain,
                   ),
+                ),
+                Text(
+                  '24/7 Helpline: 1-800-VOTE-HELP',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: textSecondary.withOpacity(0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: brandPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/ballot'),
+                child: const Text(
+                  'Access Digital Ballot',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.verified_user_outlined,
+                size: 14,
+                color: successGreen,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'End-to-End Verifiable Encryption',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textSecondary.withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
