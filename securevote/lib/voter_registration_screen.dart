@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 
 class VoterRegistrationScreen extends StatefulWidget {
   const VoterRegistrationScreen({super.key});
@@ -30,6 +30,9 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
   final TextEditingController phoneController = TextEditingController();
 
   PlatformFile? aadhaarPdf;
+  Uint8List? profileImage;
+
+  String? selectedGender;
 
   bool showPassword = false;
   bool showConfirmPassword = false;
@@ -41,10 +44,19 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
       withData: true,
     );
 
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        aadhaarPdf = result.files.single;
-      });
+    if (result != null) {
+      setState(() => aadhaarPdf = result.files.single);
+    }
+  }
+
+  Future<void> pickProfileImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+
+    if (result != null) {
+      setState(() => profileImage = result.files.single.bytes);
     }
   }
 
@@ -67,7 +79,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
             color: brandPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
+            letterSpacing: 2,
           ),
         ),
       ),
@@ -75,7 +87,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -92,6 +104,34 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                   'Complete your profile to access your ballot.',
                   style: TextStyle(fontSize: 15, color: textSecondary),
                 ),
+                const SizedBox(height: 24),
+
+                /// Profile Photo
+                Center(
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 42,
+                        backgroundColor: inputBorder,
+                        backgroundImage: profileImage != null
+                            ? MemoryImage(profileImage!)
+                            : null,
+                        child: profileImage == null
+                            ? const Icon(
+                                Icons.person,
+                                size: 42,
+                                color: textSecondary,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: pickProfileImage,
+                        child: const Text('Upload Profile Photo'),
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
@@ -99,8 +139,12 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                   controller: nameController,
                   label: 'Full Legal Name',
                   hint: 'Jane Marie Doe',
-                  icon: Icons.person_outline_rounded,
+                  icon: Icons.person_outline,
                 ),
+
+                const SizedBox(height: 20),
+
+                _buildGenderField(),
 
                 const SizedBox(height: 20),
 
@@ -108,7 +152,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                   controller: dobController,
                   label: 'Date of Birth',
                   hint: 'MM / DD / YYYY',
-                  icon: Icons.calendar_today_rounded,
+                  icon: Icons.calendar_today,
                 ),
 
                 const SizedBox(height: 20),
@@ -150,60 +194,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
                 const SizedBox(height: 20),
 
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Aadhaar Document (PDF)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: textMain,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    OutlinedButton.icon(
-                      onPressed: pickAadhaarPdf,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Upload Masked Aadhaar PDF'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: const BorderSide(color: inputBorder),
-                      ),
-                    ),
-
-                    if (aadhaarPdf != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.picture_as_pdf,
-                            size: 18,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              aadhaarPdf!.name,
-                              style: const TextStyle(fontSize: 13),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Upload masked Aadhaar (only last 4 digits visible)',
-                      style: TextStyle(fontSize: 11, color: textSecondary),
-                    ),
-                  ],
-                ),
+                _buildAadhaarUpload(),
 
                 const SizedBox(height: 20),
 
@@ -225,32 +216,6 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 28),
-
-                // Admin verification note
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: brandPrimary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Your application will be reviewed by an administrator. '
-                        'Once your details are verified, you will be allowed to vote.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textSecondary.withOpacity(0.9),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 32),
 
                 SizedBox(
@@ -259,8 +224,6 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandPrimary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -283,6 +246,73 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
     );
   }
 
+  /// Gender Dropdown
+  Widget _buildGenderField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gender',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textMain,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: selectedGender,
+          hint: const Text('Select Gender'),
+          items: const [
+            DropdownMenuItem(value: 'Male', child: Text('Male')),
+            DropdownMenuItem(value: 'Female', child: Text('Female')),
+            DropdownMenuItem(value: 'Other', child: Text('Other')),
+          ],
+          onChanged: (value) => setState(() => selectedGender = value),
+          decoration: _inputDecoration(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAadhaarUpload() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Aadhaar Document (PDF)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: pickAadhaarPdf,
+          icon: const Icon(Icons.upload_file),
+          label: const Text('Upload Masked Aadhaar PDF'),
+        ),
+        if (aadhaarPdf != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(aadhaarPdf!.name, style: const TextStyle(fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: inputFill,
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: inputBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: brandPrimary),
+      ),
+    );
+  }
+
   Widget _buildSimpleField({
     required TextEditingController controller,
     required String label,
@@ -293,31 +323,14 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textMain,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: inputFill,
+          decoration: _inputDecoration().copyWith(
             hintText: hint,
-            suffixIcon: Icon(icon, color: textSecondary),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: inputBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: brandPrimary, width: 1.5),
-            ),
+            suffixIcon: Icon(icon),
           ),
         ),
       ],
@@ -333,36 +346,16 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textMain,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: !show,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: inputFill,
+          decoration: _inputDecoration().copyWith(
             hintText: '••••••••',
             suffixIcon: IconButton(
-              icon: Icon(
-                show ? Icons.visibility_off : Icons.visibility,
-                color: textSecondary,
-              ),
+              icon: Icon(show ? Icons.visibility_off : Icons.visibility),
               onPressed: toggle,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: inputBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: brandPrimary, width: 1.5),
             ),
           ),
         ),
