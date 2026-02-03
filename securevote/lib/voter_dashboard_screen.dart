@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-class VoterDashboardScreen extends StatelessWidget {
+class VoterDashboardScreen extends StatefulWidget {
   const VoterDashboardScreen({super.key});
 
+  @override
+  State<VoterDashboardScreen> createState() => _VoterDashboardScreenState();
+}
+
+class _VoterDashboardScreenState extends State<VoterDashboardScreen> {
   // Shared Palette (Consistent with Login/Registration)
   static const Color brandPrimary = Color(0xFF1A434E);
   static const Color accentBlue = Color(0xFF3B82F6);
@@ -12,6 +21,51 @@ class VoterDashboardScreen extends StatelessWidget {
   static const Color cardBorder = Color(0xFFE5E7EB);
   static const Color successGreen = Color(0xFF059669);
   static const Color successBg = Color(0xFFECFDF5);
+
+  List<dynamic> elections = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchElections();
+  }
+
+  Future<void> _fetchElections() async {
+    try {
+      String baseUrl = 'http://localhost:8080';
+      if (!kIsWeb) {
+        try {
+          if (Platform.isAndroid) {
+            baseUrl = 'http://10.0.2.2:8080';
+          }
+        } catch (e) {
+          // Fallback
+        }
+      }
+
+      final url = Uri.parse('$baseUrl/api/elections/live');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          elections = jsonDecode(response.body);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Failed to load elections: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +107,7 @@ class VoterDashboardScreen extends StatelessWidget {
               children: [
                 // 1. Welcome Section
                 const Text(
-                  'Welcome, John',
+                  'Welcome, Voter',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -98,7 +152,7 @@ class VoterDashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'ID: 982-114-55',
+                      'STATUS: ACTIVE',
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary.withOpacity(0.8),
@@ -116,7 +170,7 @@ class VoterDashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _buildStatCard(
                         label: 'Active Ballots',
-                        value: '02',
+                        value: isLoading ? '-' : '${elections.length}',
                         icon: Icons.how_to_vote_outlined,
                         isPrimary: true,
                       ),
@@ -125,7 +179,7 @@ class VoterDashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _buildStatCard(
                         label: 'Voted History',
-                        value: '14',
+                        value: '0',
                         icon: Icons.history,
                         isPrimary: false,
                       ),
@@ -147,36 +201,41 @@ class VoterDashboardScreen extends StatelessWidget {
                         color: textMain,
                       ),
                     ),
-                    Text(
-                      'Closing Soon',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.orange[800],
+                    if (isLoading)
+                      const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                    ),
                   ],
                 ),
 
                 const SizedBox(height: 16),
 
-                // 4. Election Cards
-                _buildElectionCard(
-                  context,
-                  title: '2025 Presidential Election',
-                  date: 'Due by Nov 5, 2025',
-                  tag: 'NATIONAL',
-                  description: 'Federal executive branch election.',
-                ),
+                // 4. Election Cards List
+                if (errorMessage != null)
+                   Text(errorMessage!, style: const TextStyle(color: Colors.red)),
 
-                const SizedBox(height: 16),
+                if (!isLoading && elections.isEmpty)
+                   const Text("No active elections found."),
 
-                _buildElectionCard(
-                  context,
-                  title: 'City Council - District 4',
-                  date: 'Due by Nov 10, 2025',
-                  tag: 'LOCAL',
-                  description: 'Representative for your specific district.',
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: elections.length,
+                  itemBuilder: (context, index) {
+                    final election = elections[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildElectionCard(
+                        context,
+                        title: election['title'] ?? 'Unknown Election',
+                        date: 'Due by ${election['endTime']?.substring(0, 10) ?? 'Soon'}',
+                        tag: 'OPEN',
+                        description: election['description'] ?? 'No description provided.',
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 48),
@@ -331,6 +390,17 @@ class VoterDashboardScreen extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
+            const SizedBox(height: 8),
+             Text(
+              description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: textSecondary,
+                height: 1.4,
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -356,3 +426,4 @@ class VoterDashboardScreen extends StatelessWidget {
     );
   }
 }
+
