@@ -9,9 +9,8 @@ class VoterRegistrationScreen extends StatefulWidget {
 }
 
 class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
-  // Shared Palette (Consistent with Login)
+  // Shared Palette
   static const Color brandPrimary = Color(0xFF1A434E);
-  static const Color accentBlue = Color(0xFF3B82F6);
   static const Color bgCanvas = Color(0xFFFFFFFF);
   static const Color textMain = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF6B7280);
@@ -21,7 +20,13 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController govIdController = TextEditingController();
+  final TextEditingController aadharController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  bool showPassword = false;
+  bool showConfirmPassword = false;
 
   @override
   Widget build(BuildContext context) {
@@ -51,18 +56,15 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Title Section
                 const Text(
                   'Registration',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: textMain,
-                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -73,37 +75,6 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
                 const SizedBox(height: 24),
 
-                // 2. Status Badge (Clean Pill Style)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.orange.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.circle, size: 8, color: Colors.orange[700]),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Status: Application Pending",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange[900],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // 3. Form Fields
                 _buildSimpleField(
                   controller: nameController,
                   label: 'Full Legal Name',
@@ -133,30 +104,51 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                 const SizedBox(height: 20),
 
                 _buildSimpleField(
-                  controller: govIdController,
-                  label: 'Government ID Number',
-                  hint: 'Passport or ID Number',
+                  controller: aadharController,
+                  label: 'Aadhaar Number',
+                  hint: '12-digit Aadhaar Number',
                   icon: Icons.badge_outlined,
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
-                // 4. Security Note
+                _buildPasswordField(
+                  controller: passwordController,
+                  label: 'Password',
+                  show: showPassword,
+                  toggle: () => setState(() => showPassword = !showPassword),
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildPasswordField(
+                  controller: confirmPasswordController,
+                  label: 'Confirm Password',
+                  show: showConfirmPassword,
+                  toggle: () => setState(
+                    () => showConfirmPassword = !showConfirmPassword,
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // Admin verification note
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
-                      Icons.lock_outline,
+                      Icons.info_outline,
                       size: 16,
                       color: brandPrimary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Your data is encrypted with 256-bit security and is only shared with official electoral boards.',
+                        'Your application will be reviewed by an administrator. '
+                        'Once your details are verified, you will be allowed to vote.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: textSecondary.withOpacity(0.8),
+                          color: textSecondary.withOpacity(0.9),
                           height: 1.4,
                         ),
                       ),
@@ -166,7 +158,6 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
                 const SizedBox(height: 32),
 
-                // 5. Submit Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -189,24 +180,6 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // 6. Secondary Link
-                Center(
-                  child: TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      "View Requirements",
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -237,24 +210,56 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
         TextField(
           controller: controller,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 15, color: textMain),
           decoration: InputDecoration(
             filled: true,
             fillColor: inputFill,
             hintText: hint,
-            hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
+            suffixIcon: Icon(icon, color: textSecondary),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: inputBorder),
             ),
-            suffixIcon: Padding(
-              padding: EdgeInsets.only(
-                right: 8,
-                // Align icon to top if multiline
-                top: maxLines > 1 ? 12 : 0,
-                bottom: maxLines > 1 ? 40 : 0,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: brandPrimary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required bool show,
+    required VoidCallback toggle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: textMain,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: !show,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: inputFill,
+            hintText: '••••••••',
+            suffixIcon: IconButton(
+              icon: Icon(
+                show ? Icons.visibility_off : Icons.visibility,
+                color: textSecondary,
               ),
-              child: Icon(icon, size: 20, color: textSecondary),
+              onPressed: toggle,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
