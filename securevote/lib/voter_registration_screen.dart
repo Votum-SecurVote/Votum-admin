@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class VoterRegistrationScreen extends StatefulWidget {
   const VoterRegistrationScreen({super.key});
@@ -61,6 +65,82 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
 
     if (result != null) {
       setState(() => profileImage = result.files.single.bytes);
+    }
+  }
+
+  Future<void> submitRegistration() async {
+    if (aadhaarPdf == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload Aadhaar PDF')),
+      );
+      return;
+    }
+
+    // Determine Base URL
+    String baseUrl = 'http://localhost:8080';
+    if (!kIsWeb) {
+      // Android Emulator uses 10.0.2.2 to access host localhost
+      try {
+        if (Platform.isAndroid) {
+          baseUrl = 'http://10.0.2.2:8080';
+        }
+      } catch (e) {
+        // Fallback to localhost if Platform check fails
+      }
+    }
+
+    final uri = Uri.parse('$baseUrl/api/auth/register');
+
+    final request = http.MultipartRequest('POST', uri);
+
+    // ---- TEXT FIELDS ----
+    request.fields['fullName'] = nameController.text;
+    request.fields['gender'] = selectedGender ?? '';
+    request.fields['dateOfBirth'] = dobController.text;
+    request.fields['email'] = emailController.text;
+    request.fields['phone'] = phoneController.text;
+    request.fields['address'] = addressController.text;
+    request.fields['aadhaarNumber'] = aadharController.text;
+    request.fields['password'] = passwordController.text;
+    request.fields['confirmPassword'] = confirmPasswordController.text;
+
+    // ---- FILE: Aadhaar PDF ----
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'aadhaarPdf',
+        aadhaarPdf!.bytes!,
+        filename: aadhaarPdf!.name,
+      ),
+    );
+
+    // ---- FILE: Profile Image (optional) ----
+    if (profileImage != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'profileImage',
+          profileImage!,
+          filename: 'profile.jpg',
+        ),
+      );
+    }
+
+    try {
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration submitted successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $responseBody')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
   }
 
@@ -288,6 +368,7 @@ class _VoterRegistrationScreenState extends State<VoterRegistrationScreen> {
                         );
                         return;
                       }
+                      submitRegistration();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandPrimary,
