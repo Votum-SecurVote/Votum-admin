@@ -83,7 +83,7 @@ class _MFAScreenState extends State<MFAScreen> {
 
                 // 1. Icon Header
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  // padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: brandPrimary.withOpacity(0.05),
                     shape: BoxShape.circle,
