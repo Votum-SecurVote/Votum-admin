@@ -263,12 +263,3 @@ Ballot (1) ──→ (Many) Candidates
 6. **Rollback**: Show version history → Rollback to previous → See new version
 
 ---
-
-This system demonstrates understanding of:
-- Full-stack development
-- REST API design
-- Database relationships
-- Authentication & authorization
-- State management
-- Modern React patterns
-- Spring Boot architecture
