@@ -36,6 +36,24 @@ public class BallotService {
             throw new IllegalArgumentException("Cannot edit ballot after election is published");
         }
 
+        if (req.getOptions() == null || req.getOptions().size() < 2) {
+            throw new IllegalArgumentException("At least 2 candidates required");
+        }
+
+        // Ensure no duplicate candidates with same name + party (case-insensitive)
+        var seen = new java.util.HashSet<String>();
+        for (BallotRequest.OptionDto opt : req.getOptions()) {
+            String name = opt.getName() != null ? opt.getName().trim() : "";
+            String party = opt.getParty() != null ? opt.getParty().trim() : "";
+            if (name.isEmpty() || party.isEmpty()) {
+                throw new IllegalArgumentException("Candidate name and party are required");
+            }
+            String key = (name.toLowerCase()) + "::" + (party.toLowerCase());
+            if (!seen.add(key)) {
+                throw new IllegalArgumentException("Duplicate candidate with same name and party is not allowed");
+            }
+        }
+
         int nextVersion = ballotRepository.findFirstByElectionIdOrderByVersionDesc(electionId)
                 .map(b -> b.getVersion() + 1)
                 .orElse(1);
@@ -51,17 +69,17 @@ public class BallotService {
                 .build();
         ballot = ballotRepository.save(ballot);
 
-        if (req.getOptions() != null) {
-            for (int i = 0; i < req.getOptions().size(); i++) {
-                BallotRequest.OptionDto opt = req.getOptions().get(i);
-                Candidate c = Candidate.builder()
-                        .ballotId(ballot.getId())
-                        .candidateName(opt.getName())
-                        .party(opt.getParty() != null ? opt.getParty() : "")
-                        .description(opt.getDescription() != null ? opt.getDescription() : "")
-                        .build();
-                candidateRepository.save(c);
-            }
+        for (int i = 0; i < req.getOptions().size(); i++) {
+            BallotRequest.OptionDto opt = req.getOptions().get(i);
+            String name = opt.getName() != null ? opt.getName().trim() : "";
+            String party = opt.getParty() != null ? opt.getParty().trim() : "";
+            Candidate c = Candidate.builder()
+                    .ballotId(ballot.getId())
+                    .candidateName(name)
+                    .party(party)
+                    .description(opt.getDescription() != null ? opt.getDescription() : "")
+                    .build();
+            candidateRepository.save(c);
         }
 
         auditService.log("BALLOT_CREATED", electionId, performedBy, ballot.getId().toString());

@@ -3,6 +3,7 @@ package com.voteadmin.dto;
 import lombok.Data;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
@@ -23,7 +24,10 @@ public class BallotRequest {
 
     @Data
     public static class OptionDto {
+        @NotBlank(message = "Candidate name is required")
         private String name;
+
+        @NotBlank(message = "Candidate party is required")
         private String party;
         private String description;
     }

@@ -373,15 +373,41 @@ const BallotDesigner = () => {
     ? (selectedElection.isPublished ?? selectedElection.is_published) === false
     : true;
 
+  const hasDuplicateCandidate = (list) => {
+    const seen = new Set();
+    for (const c of list) {
+      const name = (c.name || '').trim().toLowerCase();
+      const party = (c.party || '').trim().toLowerCase();
+      if (!name || !party) {
+        return 'Candidate name and party are required for every candidate';
+      }
+      const key = `${name}::${party}`;
+      if (seen.has(key)) {
+        return 'Duplicate candidate with the same name and party is not allowed (case-insensitive)';
+      }
+      seen.add(key);
+    }
+    return null;
+  };
+
   const addCandidate = () => {
-    if (!newCandidate.name?.trim() || !newCandidate.party?.trim()) {
+    const name = newCandidate.name?.trim();
+    const party = newCandidate.party?.trim();
+
+    if (!name || !party) {
       alert('Candidate name and party are required');
       return;
     }
-    setCandidates([
-      ...candidates,
-      { ...newCandidate, id: Date.now().toString() },
-    ]);
+
+    const candidateToAdd = { ...newCandidate, name, party, id: Date.now().toString() };
+    const nextList = [...candidates, candidateToAdd];
+    const duplicateError = hasDuplicateCandidate(nextList);
+    if (duplicateError) {
+      alert(duplicateError);
+      return;
+    }
+
+    setCandidates(nextList);
     setNewCandidate({ name: '', party: '', description: '' });
   };
 
@@ -392,6 +418,12 @@ const BallotDesigner = () => {
   const saveBallot = async () => {
     if (candidates.length < 2) {
       alert('At least 2 candidates are required');
+      return;
+    }
+
+    const duplicateError = hasDuplicateCandidate(candidates);
+    if (duplicateError) {
+      alert(duplicateError);
       return;
     }
     if (!electionId) {
@@ -407,7 +439,11 @@ const BallotDesigner = () => {
     try {
       const res = await electionService.createBallot(electionId, {
         title: `Ballot v${nextVersion}`,
-        options: candidates,
+        options: candidates.map((c) => ({
+          name: c.name?.trim(),
+          party: c.party?.trim(),
+          description: c.description,
+        })),
         maxSelections: 1,
       });
       const data = res.data ?? res;
