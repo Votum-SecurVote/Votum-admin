@@ -76,12 +76,6 @@ const Login = () => {
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
-        
-        <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0f9ff', borderRadius: '4px', fontSize: '0.875rem' }}>
-          <strong>Test Credentials:</strong><br />
-          Username: admin<br />
-          Password: admin123
-        </div>
       </form>
     </div>
   );
