@@ -1,6 +1,6 @@
 # Presentation Summary - How the System Works
 
-## Quick Overview for Professor Presentation
+## Quick Overview
 
 ### System Architecture
 **Frontend (React) ↔ Backend (Spring Boot) ↔ Database (PostgreSQL)**
