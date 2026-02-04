@@ -37,7 +37,6 @@ class _BallotScreenState extends State<BallotScreen> {
       'party': 'Independent',
       'image': 'https://i.pravatar.cc/150?img=9', // Placeholder
     },
-    {'name': 'Write-in Candidate', 'party': 'Manual Entry', 'image': ''},
   ];
 
   @override
