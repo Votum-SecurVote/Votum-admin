@@ -5,6 +5,8 @@
  * Your backend teammate can later replace this with real API calls.
  */
 
+// Called from the Login screen – pretends to authenticate any
+// non-empty username/password and stores a fake ADMIN token.
 export const loginAdmin = async (username, password) => {
   if (!username || !password) {
     throw new Error('Username and password are required');
