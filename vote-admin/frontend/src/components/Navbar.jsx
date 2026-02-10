@@ -11,8 +11,8 @@ const Nav = styled.nav`
   left: 0;
   right: 0;
   height: 64px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(16px);
+  background: #ffffff;
+  backdrop-filter: none;
   border-bottom: 1px solid var(--border-color);
   z-index: 1000;
   padding: 0 2rem;
@@ -30,9 +30,7 @@ const NavContent = styled.div`
 const Logo = styled(motion.div)`
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(90deg, var(--primary), var(--info));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--brand-navy);
   cursor: pointer;
 `;
 
@@ -105,7 +103,7 @@ const AuthButton = styled.button`
   transition: all var(--transition-normal);
   
   &:hover {
-    background: var(--primary-dark);
+    background: var(--primary-hover);
     transform: translateY(-1px);
   }
 `;
