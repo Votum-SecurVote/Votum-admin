@@ -202,6 +202,7 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: var(--primary);
+  }
 `;
 
 const TextArea = styled.textarea`
@@ -215,6 +216,68 @@ const TextArea = styled.textarea`
   &:focus {
     outline: none;
     border-color: var(--primary);
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+const FileLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px dashed var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: #f9fafb;
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--primary);
+  }
+`;
+
+const ImagePreview = styled.div`
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+`;
+
+const PreviewThumb = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  background: #e5e7eb;
+`;
+
+const CandidateAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+`;
+
+const CandidateAvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const SuccessMessage = styled(motion.div)`
@@ -286,6 +349,14 @@ const ExistingVersions = styled.div`
 
 /* -------------------- Component -------------------- */
 
+const getInitials = (name) => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
+};
+
 const BallotDesigner = () => {
   const [elections, setElections] = useState([]);
   const [electionId, setElectionId] = useState('');
@@ -294,7 +365,12 @@ const BallotDesigner = () => {
   const [nextVersion, setNextVersion] = useState(1);
 
   const [candidates, setCandidates] = useState([]);
-  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', description: '' });
+  const [newCandidate, setNewCandidate] = useState({
+    name: '',
+    party: '',
+    description: '',
+    image: null, // { src, fileName }
+  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null); // { version, ballotId }
   const [loadError, setLoadError] = useState('');
@@ -401,7 +477,7 @@ const BallotDesigner = () => {
     }
 
     setCandidates(nextList);
-    setNewCandidate({ name: '', party: '', description: '' });
+    setNewCandidate({ name: '', party: '', description: '', image: null });
   };
 
   const removeCandidate = (id) => {
@@ -436,6 +512,7 @@ const BallotDesigner = () => {
           name: c.name?.trim(),
           party: c.party?.trim(),
           description: c.description,
+          imageUrl: c.image?.src || null,
         })),
         maxSelections: 1,
       });
@@ -607,6 +684,37 @@ const BallotDesigner = () => {
             value={newCandidate.description}
             onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
           />
+          <div style={{ marginTop: '0.5rem' }}>
+            <HiddenFileInput
+              id="candidate-image"
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (!/^image\/(png|jpe?g)$/.test(file.type)) {
+                  alert('Please upload a PNG or JPG image for the party logo.');
+                  return;
+                }
+                const src = URL.createObjectURL(file);
+                setNewCandidate((prev) => ({
+                  ...prev,
+                  image: { src, fileName: file.name },
+                }));
+              }}
+            />
+            <FileLabel htmlFor="candidate-image">
+              <FiUser />
+              {newCandidate.image ? 'Change party logo' : 'Upload party logo (PNG/JPG, optional)'}
+            </FileLabel>
+
+            {newCandidate.image && (
+              <ImagePreview>
+                <PreviewThumb src={newCandidate.image.src} alt="Party logo preview" />
+                <span>{newCandidate.image.fileName}</span>
+              </ImagePreview>
+            )}
+          </div>
           <Button className="secondary" onClick={addCandidate} style={{ marginTop: '0.5rem' }}>
             <FiPlus /> Add to list
           </Button>
@@ -625,14 +733,32 @@ const BallotDesigner = () => {
               {candidates.map((c) => (
                 <CandidateItem key={c.id} value={c}>
                   <CandidateCard>
-                    <div>
-                      <strong>{c.name}</strong>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{c.party}</div>
-                      {c.description && (
-                        <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                          {c.description}
-                        </div>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <CandidateAvatar>
+                        {c.image?.src ? (
+                          <CandidateAvatarImage
+                            src={c.image.src}
+                            alt={`${c.party || c.name} logo`}
+                          />
+                        ) : (
+                          <span>{getInitials(c.name)}</span>
+                        )}
+                      </CandidateAvatar>
+                      <div>
+                        <strong>{c.name}</strong>
+                        <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{c.party}</div>
+                        {c.description && (
+                          <div
+                            style={{
+                              color: '#94a3b8',
+                              fontSize: '0.85rem',
+                              marginTop: '0.25rem',
+                            }}
+                          >
+                            {c.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <Button className="secondary" onClick={() => removeCandidate(c.id)}>
                       <FiTrash2 />
