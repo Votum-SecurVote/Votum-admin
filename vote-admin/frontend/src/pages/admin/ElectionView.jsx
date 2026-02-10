@@ -292,6 +292,27 @@ const BallotHistory = styled.div`
   }
 `;
 
+const CandidateAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+`;
+
+const CandidateAvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
 const BallotVersion = styled(motion.div)`
   background: ${props => props.$isPublished ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)' : '#f9fafb'};
   border: 2px solid ${props => props.$isPublished ? '#10b981' : '#e5e7eb'};
@@ -425,6 +446,14 @@ const StatCard = styled(Card)`
 /* =====================
    COMPONENT
 ===================== */
+const getInitials = (name) => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
+};
+
 const ElectionView = () => {
   const [elections, setElections] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -572,6 +601,21 @@ const ElectionView = () => {
     }
   };
 
+  const handleDeleteBallot = async (ballotId) => {
+    if (!confirm('Delete this ballot version? This cannot be undone.')) return;
+    setActionLoading(true);
+    try {
+      await electionService.deleteBallot(ballotId);
+      await loadBallots(selected._id);
+      await loadElections();
+      alert('Ballot version deleted successfully!');
+    } catch (err) {
+      alert('Failed to delete ballot: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading) return <Loader message="Loading elections..." />;
 
   const stats = {
@@ -584,6 +628,17 @@ const ElectionView = () => {
     <Page>
       <Container>
         <Header>
+          <div
+            style={{
+              fontSize: '0.8rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              color: 'var(--text-muted)',
+              marginBottom: '0.3rem',
+            }}
+          >
+            Step 3 of 3
+          </div>
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -751,26 +806,44 @@ const ElectionView = () => {
                       Candidates ({selected.candidates.length})
                     </h4>
                     {selected.candidates.map((c, idx) => (
-                      <div key={idx} style={{ 
-                        padding: '0.8rem', 
-                        background: '#f9fafb', 
-                        borderRadius: '8px', 
-                        marginBottom: '0.5rem',
-                        borderLeft: '3px solid #667eea'
-                      }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>{c.party}</div>
-                        {c.description && (
-                          <div
-                            style={{
-                              fontSize: '0.85rem',
-                              color: 'var(--text-muted)',
-                              marginTop: '0.3rem',
-                            }}
-                          >
-                            {c.description}
-                          </div>
-                        )}
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '0.8rem',
+                          background: '#f9fafb',
+                          borderRadius: '8px',
+                          marginBottom: '0.5rem',
+                          borderLeft: '3px solid var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        <CandidateAvatar>
+                          {c.imageUrl ? (
+                            <CandidateAvatarImage
+                              src={c.imageUrl}
+                              alt={`${c.party || c.name} logo`}
+                            />
+                          ) : (
+                            <span>{getInitials(c.name)}</span>
+                          )}
+                        </CandidateAvatar>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>{c.party}</div>
+                          {c.description && (
+                            <div
+                              style={{
+                                fontSize: '0.85rem',
+                                color: 'var(--text-muted)',
+                                marginTop: '0.3rem',
+                              }}
+                            >
+                              {c.description}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -853,9 +926,21 @@ const ElectionView = () => {
                             <div className="candidates-list">
                               {ballot.options.map((opt, i) => (
                                 <div key={i} className="candidate-item">
-                                  <div>
-                                    <div className="candidate-name">{opt.name}</div>
-                                    <div className="candidate-party">{opt.party}</div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <CandidateAvatar>
+                                      {opt.imageUrl ? (
+                                        <CandidateAvatarImage
+                                          src={opt.imageUrl}
+                                          alt={`${opt.party || opt.name} logo`}
+                                        />
+                                      ) : (
+                                        <span>{getInitials(opt.name)}</span>
+                                      )}
+                                    </CandidateAvatar>
+                                    <div>
+                                      <div className="candidate-name">{opt.name}</div>
+                                      <div className="candidate-party">{opt.party}</div>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
