@@ -290,7 +290,7 @@ const ExistingVersions = styled.div`
 
 const BallotDesigner = () => {
   const [elections, setElections] = useState([]);
-  const [electionId, setElectionId] = useState(() => localStorage.getItem('lastElectionId') || '');
+  const [electionId, setElectionId] = useState('');
   const [selectedElection, setSelectedElection] = useState(null);
   const [ballots, setBallots] = useState([]);
   const [nextVersion, setNextVersion] = useState(1);
@@ -309,9 +309,11 @@ const BallotDesigner = () => {
         const res = await electionService.getAdminElections();
         if (!cancelled && res.data?.length) {
           setElections(res.data);
-          const id = electionId || res.data[0]._id;
+          // Always fall back to the first static/mock election so this
+          // screen works even if you never created one via the form.
+          const first = res.data[0];
+          const id = first._id || first.id;
           setElectionId(id);
-          localStorage.setItem('lastElectionId', id);
         }
       } catch (e) {
         if (!cancelled) setLoadError(e.message || 'Failed to load elections');
@@ -359,15 +361,8 @@ const BallotDesigner = () => {
   }, [electionId]);
 
   /* Redirect if no elections at all */
-  useEffect(() => {
-    if (!loadError && elections.length === 0 && !electionId) {
-      const t = setTimeout(() => {
-        alert('No election selected. Please create an election first.');
-        window.location.href = '/admin/election/create';
-      }, 500);
-      return () => clearTimeout(t);
-    }
-  }, [elections.length, electionId, loadError]);
+  // In UI-only mode we seed a static mock election in electionService,
+  // so this page will always have something to work with. No redirect.
 
   const isDraft = selectedElection
     ? (selectedElection.isPublished ?? selectedElection.is_published) === false
@@ -515,7 +510,6 @@ const BallotDesigner = () => {
           value={electionId}
           onChange={(e) => {
             setElectionId(e.target.value);
-            localStorage.setItem('lastElectionId', e.target.value);
           }}
         >
           <option value="">-- Choose election --</option>
