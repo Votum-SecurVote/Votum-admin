@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { loginAdmin } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 
+// Standalone admin login page – uses the mock auth service
+// so you can demo the UI without a real backend.
 const Page = styled.div`
   min-height: 100vh;
   display: flex;
@@ -96,6 +98,8 @@ const ErrorBox = styled.div`
   font-size: 0.85rem;
 `;
 
+// Login component – handles username/password form
+// and on success stores ADMIN auth + redirects to Step 3.
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
