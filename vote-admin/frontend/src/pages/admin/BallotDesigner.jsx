@@ -573,6 +573,17 @@ const BallotDesigner = () => {
   return (
     <PageContainer>
       <Header>
+        <div
+          style={{
+            fontSize: '0.8rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            color: 'var(--text-muted)',
+            marginBottom: '0.3rem',
+          }}
+        >
+          Step 2 of 3
+        </div>
         <h1>Ballot Designer</h1>
         <p>Create and manage ballot versions for an election</p>
       </Header>
