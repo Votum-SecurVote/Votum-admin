@@ -37,7 +37,7 @@ const getProgress = (startDate, endDate) => {
 ===================== */
 const Page = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-page);
   padding: 5rem 2rem 2rem;
 `;
 
@@ -89,8 +89,8 @@ const Card = styled(motion.div)`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
   }
 `;
 
@@ -104,8 +104,8 @@ const ElectionCard = styled(Card)`
   }
 
   ${props => props.$selected && `
-    border: 3px solid #667eea;
-    transform: scale(1.02);
+    border: 2px solid var(--primary);
+    transform: scale(1.01);
   `}
 `;
 
@@ -153,7 +153,7 @@ const InfoRow = styled.div`
   color: #4b5563;
 
   svg {
-    color: #667eea;
+    color: var(--primary);
     flex-shrink: 0;
   }
 `;
@@ -179,7 +179,7 @@ const ProgressBar = styled.div`
 
     .fill {
       height: 100%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
+      background: linear-gradient(90deg, var(--primary), var(--primary-hover));
       border-radius: 999px;
       transition: width 1s ease;
       position: relative;
@@ -224,9 +224,9 @@ const Button = styled.button`
   transition: all 0.3s ease;
 
   &.primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: var(--shadow-md);
 
     &:hover {
       transform: translateY(-2px);
@@ -258,11 +258,11 @@ const Button = styled.button`
 
   &.secondary {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: var(--primary);
+    border: 1px solid var(--border-color);
 
     &:hover {
-      background: #667eea;
+      background: var(--primary);
       color: white;
     }
   }
@@ -288,7 +288,7 @@ const BallotHistory = styled.div`
     font-size: 1.3rem;
 
     svg {
-      color: #667eea;
+      color: var(--primary);
     }
   }
 `;
@@ -364,7 +364,7 @@ const BallotVersion = styled(motion.div)`
       }
 
       .candidate-party {
-        color: #667eea;
+        color: var(--primary);
         font-size: 0.85rem;
       }
     }
@@ -710,10 +710,7 @@ const ElectionView = () => {
           {/* RIGHT: Election Details & Ballot History */}
           <div>
             {selected ? (
-              <Card
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
+              <Card initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <h2 style={{ marginBottom: '1.5rem', color: '#1f2937' }}>Election Details</h2>
 
                 <ActionButtons>
@@ -733,9 +730,19 @@ const ElectionView = () => {
                 </ActionButtons>
 
                 {selected.votingRules && (
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f0f9ff', borderRadius: '10px', borderLeft: '4px solid #667eea' }}>
-                    <strong style={{ color: '#1e40af' }}>Voting Rules:</strong>
-                    <p style={{ margin: '0.5rem 0 0 0', color: '#374151' }}>{selected.votingRules}</p>
+                  <div
+                    style={{
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      borderLeft: `4px solid var(--primary)`,
+                    }}
+                  >
+                    <strong style={{ color: 'var(--text-secondary)' }}>Voting Rules:</strong>
+                    <p style={{ margin: '0.5rem 0 0 0', color: 'var(--text-primary)' }}>
+                      {selected.votingRules}
+                    </p>
                   </div>
                 )}
 
@@ -753,10 +760,16 @@ const ElectionView = () => {
                         marginBottom: '0.5rem',
                         borderLeft: '3px solid #667eea'
                       }}>
-                        <div style={{ fontWeight: 600, color: '#1f2937' }}>{c.name}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#667eea' }}>{c.party}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>{c.party}</div>
                         {c.description && (
-                          <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.3rem' }}>
+                          <div
+                            style={{
+                              fontSize: '0.85rem',
+                              color: 'var(--text-muted)',
+                              marginTop: '0.3rem',
+                            }}
+                          >
                             {c.description}
                           </div>
                         )}
