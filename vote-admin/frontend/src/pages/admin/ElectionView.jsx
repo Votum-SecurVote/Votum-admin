@@ -47,20 +47,19 @@ const Container = styled.div`
 `;
 
 const Header = styled.div`
-  text-align: center;
-  margin-bottom: 3rem;
-  color: white;
+  text-align: left;
+  margin-bottom: 2.5rem;
+  color: var(--text-secondary);
 
   h1 {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
   }
 
   p {
-    font-size: 1.2rem;
-    opacity: 0.9;
+    font-size: 0.95rem;
+    color: var(--text-muted);
   }
 `;
 
@@ -634,9 +633,8 @@ const ElectionView = () => {
         </StatsGrid>
 
         <Grid>
-          {/* LEFT: Election List */}
           <div>
-            <h2 style={{ color: 'white', marginBottom: '1.5rem', fontSize: '1.8rem' }}>
+            <h2 style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               All Elections
             </h2>
             {elections.length === 0 ? (
