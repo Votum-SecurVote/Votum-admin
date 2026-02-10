@@ -6,6 +6,11 @@
  * matches what the components expect (methods and return shape),
  * so your backend teammate can later replace these implementations
  * with real axios calls.
+ *
+ * Key areas to show:
+ *  - createElection → where new elections are created
+ *  - createBallot   → where new ballot versions are created
+ *  - deleteElection / deleteBallot → where removal happens
  */
 
 // Simple in‑memory store for this tab/session
@@ -69,6 +74,8 @@ const getBallotsArray = (electionId) => {
 
 export const electionService = {
   // ----- Election APIs -----
+  // createElection – used by Step 1 "Create Election" form
+  // to store title/description and the IST start/end dates.
   createElection: async (data) => {
     const id = makeId();
     const created = {
@@ -129,6 +136,8 @@ export const electionService = {
   },
 
   // ----- Ballot APIs (versioned by election) -----
+  // createBallot – used by Step 2 "Ballot Designer" to create
+  // a new ballot version including candidates + party logos.
   createBallot: async (electionId, data) => {
     const election = findElection(electionId);
     if (!election) throw new Error('Election not found');
@@ -169,6 +178,8 @@ export const electionService = {
     return { data: ballots.slice() };
   },
 
+  // deleteBallot – used in Step 3 "Election View" to remove
+  // a specific ballot version from the history list.
   deleteBallot: async (ballotId) => {
     for (const [electionId, ballots] of Object.entries(ballotsByElection)) {
       const index = ballots.findIndex((b) => b.id === ballotId);
