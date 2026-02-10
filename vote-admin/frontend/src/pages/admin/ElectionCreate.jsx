@@ -173,7 +173,8 @@ const TextArea = styled.textarea`
 const DateField = styled.div`
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.4rem;
 `;
 
 const DateInput = styled(Input)`
@@ -201,6 +202,90 @@ const DateIcon = styled.button`
   }
 `;
 
+const CalendarPopover = styled.div`
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 0.75rem 0.9rem;
+  width: 260px;
+`;
+
+const CalendarHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+`;
+
+const CalendarNavButton = styled.button`
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--primary);
+  }
+`;
+
+const CalendarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.15rem;
+  font-size: 0.75rem;
+`;
+
+const CalendarWeekday = styled.div`
+  text-align: center;
+  padding: 0.2rem 0;
+  font-weight: 600;
+  color: var(--text-muted);
+`;
+
+const CalendarCell = styled.button`
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  background: ${({ $isSelected }) =>
+    $isSelected ? 'var(--primary)' : 'transparent'};
+  color: ${({ $isSelected }) =>
+    $isSelected ? '#ffffff' : 'var(--text-primary)'};
+  opacity: ${({ disabled }) => (disabled ? 0.35 : 1)};
+
+  &:hover:not(:disabled) {
+    background: ${({ $isSelected }) =>
+      $isSelected ? 'var(--primary-hover)' : 'var(--bg-hover)'};
+  }
+`;
+
+const TimeRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+
+  input[type='time'] {
+    flex: 1;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 0.75rem;
+  }
+`;
+
 const Button = styled(motion.button)`
   padding: 0.875rem 1.5rem;
   border-radius: var(--radius-md);
@@ -218,6 +303,179 @@ const SuccessMessage = styled(motion.div)`
   border-radius: var(--radius-lg);
   text-align: center;
 `;
+
+/* =========================
+   DateTime Picker helpers
+========================= */
+
+const pad = (n) => String(n).padStart(2, '0');
+
+const parseLocalDateTime = (value) => {
+  if (!value) return { date: null, time: '' };
+  const [datePart, timePart] = value.split('T');
+  if (!datePart) return { date: null, time: timePart || '' };
+  const [y, m, d] = datePart.split('-').map(Number);
+  if (!y || !m || !d) return { date: null, time: timePart || '' };
+  const date = new Date(y, m - 1, d);
+  return { date, time: timePart || '' };
+};
+
+const formatLocalDateTime = (date, time) => {
+  if (!date || !time) return '';
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  return `${y}-${m}-${d}T${time}`;
+};
+
+const monthLabel = (date) =>
+  date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+
+const buildCalendarDays = (currentMonth) => {
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const start = new Date(year, month, 1);
+  const firstDay = start.getDay(); // 0-6
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i += 1) {
+    cells.push(null);
+  }
+  for (let d = 1; d <= daysInMonth; d += 1) {
+    cells.push(d);
+  }
+  return cells;
+};
+
+const DateTimePicker = ({ name, label, icon, value, onChange, required }) => {
+  const { date: parsedDate, time: parsedTime } = parseLocalDateTime(value);
+  const [open, setOpen] = React.useState(false);
+  const [month, setMonth] = React.useState(parsedDate || new Date());
+  const [time, setTime] = React.useState(parsedTime || '');
+
+  const handleInputChange = (e) => {
+    onChange(e);
+  };
+
+  const handleDayClick = (day) => {
+    if (!day) return;
+    const nextDate = new Date(month.getFullYear(), month.getMonth(), day);
+    const nextValue = formatLocalDateTime(nextDate, time || '09:00');
+    onChange({
+      target: {
+        name,
+        value: nextValue,
+      },
+    });
+  };
+
+  const handleTimeChange = (e) => {
+    const nextTime = e.target.value;
+    setTime(nextTime);
+    if (parsedDate) {
+      const nextValue = formatLocalDateTime(parsedDate, nextTime);
+      onChange({
+        target: {
+          name,
+          value: nextValue,
+        },
+      });
+    }
+  };
+
+  const selectedDay = parsedDate ? parsedDate.getDate() : null;
+  const cells = buildCalendarDays(month);
+
+  return (
+    <FormGroup>
+      <Label>
+        {icon} {label}
+      </Label>
+      <DateField>
+        <div style={{ position: 'relative' }}>
+          <DateInput
+            name={name}
+            placeholder="YYYY-MM-DDTHH:mm"
+            value={value}
+            onChange={handleInputChange}
+            required={required}
+          />
+          <DateIcon
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-label={`Open ${label} calendar`}
+          >
+            <FiCalendar size={16} />
+          </DateIcon>
+
+          {open && (
+            <CalendarPopover>
+              <CalendarHeader>
+                <CalendarNavButton
+                  type="button"
+                  onClick={() =>
+                    setMonth(
+                      (m) =>
+                        new Date(
+                          m.getFullYear(),
+                          m.getMonth() - 1,
+                          1
+                        )
+                    )
+                  }
+                >
+                  ‹
+                </CalendarNavButton>
+                <span>{monthLabel(month)}</span>
+                <CalendarNavButton
+                  type="button"
+                  onClick={() =>
+                    setMonth(
+                      (m) =>
+                        new Date(
+                          m.getFullYear(),
+                          m.getMonth() + 1,
+                          1
+                        )
+                    )
+                  }
+                >
+                  ›
+                </CalendarNavButton>
+              </CalendarHeader>
+
+              <CalendarGrid>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => (
+                  <CalendarWeekday key={d}>{d}</CalendarWeekday>
+                ))}
+                {cells.map((day, idx) =>
+                  day === null ? (
+                    <div key={idx} />
+                  ) : (
+                    <CalendarCell
+                      key={idx}
+                      type="button"
+                      onClick={() => handleDayClick(day)}
+                      $isSelected={day === selectedDay}
+                    >
+                      {day}
+                    </CalendarCell>
+                  )
+                )}
+              </CalendarGrid>
+
+              <TimeRow>
+                <span>Time</span>
+                <input type="time" value={time} onChange={handleTimeChange} />
+              </TimeRow>
+            </CalendarPopover>
+          )}
+        </div>
+      </DateField>
+    </FormGroup>
+  );
+};
 
 const ElectionCreate = () => {
   const [loading, setLoading] = useState(false);
@@ -415,51 +673,23 @@ const ElectionCreate = () => {
                 Scheduling
               </h3>
 
-              <FormGroup>
-                <Label>
-                  <FiCalendar /> Start Date (IST)
-                </Label>
-                <DateField>
-                  <DateInput
-                    id="startDate"
-                    type="datetime-local"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    required
-                  />
-                  <DateIcon
-                    type="button"
-                    onClick={() => document.getElementById('startDate')?.focus()}
-                    aria-label="Open start date picker"
-                  >
-                    <FiCalendar size={16} />
-                  </DateIcon>
-                </DateField>
-              </FormGroup>
+              <DateTimePicker
+                name="startDate"
+                label="Start Date (IST)"
+                icon={<FiCalendar />}
+                value={formData.startDate}
+                onChange={handleChange}
+                required
+              />
 
-              <FormGroup>
-                <Label>
-                  <FiClock /> End Date (IST)
-                </Label>
-                <DateField>
-                  <DateInput
-                    id="endDate"
-                    type="datetime-local"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    required
-                  />
-                  <DateIcon
-                    type="button"
-                    onClick={() => document.getElementById('endDate')?.focus()}
-                    aria-label="Open end date picker"
-                  >
-                    <FiCalendar size={16} />
-                  </DateIcon>
-                </DateField>
-              </FormGroup>
+              <DateTimePicker
+                name="endDate"
+                label="End Date (IST)"
+                icon={<FiClock />}
+                value={formData.endDate}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <hr
