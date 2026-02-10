@@ -1,61 +1,232 @@
-import axios from 'axios';
+/**
+ * UI-only mock election + ballot service.
+ *
+ * This is deliberately implemented without any HTTP calls so the
+ * admin UI works completely without a backend. The API surface
+ * matches what the components expect (methods and return shape),
+ * so your backend teammate can later replace these implementations
+ * with real axios calls.
+ */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Simple in‑memory store for this tab/session
+let elections = [];
+const ballotsByElection = {}; // electionId -> ballot[]
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+// Helper to generate IDs
+const makeId = () =>
+  (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
 
-// Request interceptor for adding auth token (JWT-based RBAC)
-api.interceptors.request.use(
-  (config) => {
-    const stored = localStorage.getItem('auth');
-    if (stored) {
-      try {
-        const { token } = JSON.parse(stored);
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Seed with one demo election + ballot so the dashboard isn't empty
+(() => {
+  const now = new Date();
+  const start = new Date(now.getTime() - 60 * 60 * 1000); // 1h ago
+  const end = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2h
 
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    const message = error.response?.data?.error || error.message;
-    return Promise.reject(new Error(message));
-  }
-);
+  const electionId = makeId();
+  const demoElection = {
+    _id: electionId,
+    title: 'Student Council Election 2026',
+    description: 'Demo election so the UI works without any backend.',
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    votingRules: 'One vote per voter. Top candidate wins.',
+    isPublished: true,
+    candidates: [
+      { name: 'Alice Johnson', party: 'Unity Party', description: 'Focus on transparency and student wellbeing.' },
+      { name: 'Rahul Verma', party: 'Progressive Front', description: 'Tech upgrades and better campus services.' },
+      { name: 'Sara Lee', party: 'Green Campus', description: 'Sustainability and mental health focus.' },
+    ],
+  };
+
+  elections.push(demoElection);
+
+  const ballotId = makeId();
+  ballotsByElection[electionId] = [
+    {
+      id: ballotId,
+      version: 1,
+      isPublished: true,
+      title: 'Main Ballot',
+      description: 'Choose exactly one candidate.',
+      createdAt: now.toISOString(),
+      options: demoElection.candidates.map((c) => ({
+        name: c.name,
+        party: c.party,
+      })),
+    },
+  ];
+})();
+
+const findElection = (id) => elections.find((e) => e._id === id || e.id === id) || null;
+
+const getBallotsArray = (electionId) => {
+  if (!ballotsByElection[electionId]) ballotsByElection[electionId] = [];
+  return ballotsByElection[electionId];
+};
 
 export const electionService = {
-  // Election APIs
-  createElection: (data) => api.post('/elections', data),
-  getElection: (id) => api.get(`/elections/${id}`),
-  getActiveElections: () => api.get('/elections/active'),
-  getAdminElections: () => api.get('/elections/admin'),
-  publishElection: (id) => api.post(`/elections/${id}/publish`),
-  unpublishElection: (id) => api.post(`/elections/${id}/unpublish`),
-  deleteElection: (id) => api.delete(`/elections/${id}`),
-  
-  // Ballot APIs (versioned by election)
-  createBallot: (electionId, data) => api.post(`/elections/${electionId}/ballots`, data),
-  getElectionBallots: (electionId) => api.get(`/elections/${electionId}/ballots`),
-  publishBallot: (ballotId) => api.post(`/ballots/${ballotId}/publish`),
-  unpublishBallot: (ballotId) => api.post(`/ballots/${ballotId}/unpublish`),
-  rollbackBallot: (ballotId, targetVersion) =>
-    api.post(`/ballots/${ballotId}/rollback`, { targetVersion }),
+  // ----- Election APIs -----
+  createElection: async (data) => {
+    const id = makeId();
+    const created = {
+      _id: id,
+      title: data.title,
+      description: data.description ?? '',
+      startDate: data.startDate,
+      endDate: data.endDate,
+      votingRules: data.votingRules ?? '',
+      isPublished: false,
+      candidates: [],
+    };
+    elections.push(created);
+    return { data: created };
+  },
+
+  getElection: async (id) => {
+    const election = findElection(id);
+    if (!election) {
+      throw new Error('Election not found');
+    }
+    return { data: election };
+  },
+
+  getActiveElections: async () => {
+    const now = Date.now();
+    const active = elections.filter((e) => {
+      const start = new Date(e.startDate).getTime();
+      const end = new Date(e.endDate).getTime();
+      return e.isPublished && now >= start && now <= end;
+    });
+    return { data: active };
+  },
+
+  getAdminElections: async () => {
+    // For UI-only mode, just return all elections
+    return { data: elections.slice() };
+  },
+
+  publishElection: async (id) => {
+    const e = findElection(id);
+    if (!e) throw new Error('Election not found');
+    e.isPublished = true;
+    return { data: e };
+  },
+
+  unpublishElection: async (id) => {
+    const e = findElection(id);
+    if (!e) throw new Error('Election not found');
+    e.isPublished = false;
+    return { data: e };
+  },
+
+  deleteElection: async (id) => {
+    elections = elections.filter((e) => (e._id || e.id) !== id);
+    delete ballotsByElection[id];
+    return { data: { success: true } };
+  },
+
+  // ----- Ballot APIs (versioned by election) -----
+  createBallot: async (electionId, data) => {
+    const election = findElection(electionId);
+    if (!election) throw new Error('Election not found');
+
+    const ballots = getBallotsArray(electionId);
+    const nextVersion = ballots.length
+      ? Math.max(...ballots.map((b) => b.version || 0)) + 1
+      : 1;
+
+    const id = makeId();
+    const created = {
+      id,
+      version: nextVersion,
+      isPublished: false,
+      title: data.title ?? `Ballot v${nextVersion}`,
+      description: data.description ?? '',
+      createdAt: new Date().toISOString(),
+      options: data.options ?? [],
+    };
+
+    ballots.push(created);
+
+    // Keep election.candidates in sync with the latest ballot options
+    if (Array.isArray(created.options) && created.options.length > 0) {
+      election.candidates = created.options.map((opt) => ({
+        name: opt.name,
+        party: opt.party,
+        description: opt.description,
+      }));
+    }
+
+    return { data: created };
+  },
+
+  getElectionBallots: async (electionId) => {
+    const ballots = getBallotsArray(electionId);
+    return { data: ballots.slice() };
+  },
+
+  publishBallot: async (ballotId) => {
+    // Only one published ballot per election in this mock
+    for (const [electionId, ballots] of Object.entries(ballotsByElection)) {
+      for (const b of ballots) {
+        if (b.id === ballotId) {
+          ballots.forEach((x) => {
+            x.isPublished = x.id === ballotId;
+          });
+          return { data: b };
+        }
+      }
+    }
+    throw new Error('Ballot not found');
+  },
+
+  unpublishBallot: async (ballotId) => {
+    for (const ballots of Object.values(ballotsByElection)) {
+      const b = ballots.find((x) => x.id === ballotId);
+      if (b) {
+        b.isPublished = false;
+        return { data: b };
+      }
+    }
+    throw new Error('Ballot not found');
+  },
+
+  rollbackBallot: async (ballotId, targetVersion) => {
+    for (const [electionId, ballots] of Object.entries(ballotsByElection)) {
+      const target = ballots.find((b) => b.version === targetVersion);
+      if (!target) continue;
+
+      const nextVersion = ballots.length
+        ? Math.max(...ballots.map((b) => b.version || 0)) + 1
+        : targetVersion + 1;
+
+      const id = makeId();
+      const cloned = {
+        ...target,
+        id,
+        version: nextVersion,
+        isPublished: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      ballots.push(cloned);
+
+      // Also sync candidates on the parent election
+      const election = findElection(electionId);
+      if (election && Array.isArray(cloned.options)) {
+        election.candidates = cloned.options.map((opt) => ({
+          name: opt.name,
+          party: opt.party,
+          description: opt.description,
+        }));
+      }
+
+      return { data: cloned };
+    }
+    throw new Error('Ballot or version not found');
+  },
 };
 
 export default electionService;
