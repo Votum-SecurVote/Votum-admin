@@ -2,18 +2,23 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
+// Top navigation bar shared by all pages
 import Navbar from './components/Navbar';
 import PageTransition from './components/PageTransition';
 
-import ElectionCreate from './pages/admin/ElectionCreate';
-import BallotDesigner from './pages/admin/BallotDesigner';
-import ElectionView from './pages/admin/ElectionView';
-import Login from './pages/admin/Login';
+// Admin screens for the 3‑step flow
+import ElectionCreate from './pages/admin/ElectionCreate';   // Step 1 – create election + dates
+import BallotDesigner from './pages/admin/BallotDesigner';   // Step 2 – design ballot + candidates
+import ElectionView from './pages/admin/ElectionView';       // Step 3 – dashboard / manage election
+import Login from './pages/admin/Login';                     // Admin login (mock auth)
 
+// Route guard that only allows logged‑in admin users
 import AdminRoute from './routes/AdminRoute.jsx';
 
 import './styles/adminTheme.css';
 
+// Root React component – wires up routing between Login,
+// Create (Step 1), Ballot (Step 2) and View (Step 3).
 const App = () => {
   return (
     <Router>
