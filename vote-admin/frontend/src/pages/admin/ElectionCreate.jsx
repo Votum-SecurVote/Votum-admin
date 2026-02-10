@@ -7,9 +7,9 @@ import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
 
 /* =========================
-   IST → UTC for API
-   datetime-local gives "YYYY-MM-DDTHH:mm" with no timezone.
-   We interpret it as Asia/Kolkata (IST) and send UTC to backend.
+   Date handling helper
+   - Converts the admin's IST date/time selection
+   - into a UTC ISO string for storing on the mock "backend"
 ========================= */
 const istToUTC = (dateTimeLocalStr) => {
   if (!dateTimeLocalStr) return '';
@@ -18,7 +18,8 @@ const istToUTC = (dateTimeLocalStr) => {
 };
 
 /* =========================
-   STYLES
+   Page layout + form styling for
+   "Create Election" (Step 1 of 3)
 ========================= */
 const PageContainer = styled.div`
   max-width: 800px;
@@ -220,11 +221,16 @@ const SuccessMessage = styled(motion.div)`
   text-align: center;
 `;
 
+/* =========================
+   Main component
+   - Step 1: Create election basics + schedule
+========================= */
 const ElectionCreate = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [electionId, setElectionId] = useState(null);
 
+  // Local state for all fields on the Create Election form
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -233,11 +239,14 @@ const ElectionCreate = () => {
     votingRules: ''
   });
 
+  // Generic change handler for all text / textarea / datetime inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(p => ({ ...p, [name]: value }));
   };
 
+  // Form submit handler – builds the payload and creates the election
+  // including start/end date creation using istToUTC helper above.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -246,7 +255,9 @@ const ElectionCreate = () => {
       const payload = {
         title: formData.title,
         description: formData.description,
+        // Election start date/time creation (IST → UTC)
         startDate: istToUTC(formData.startDate),
+        // Election end date/time creation (IST → UTC)
         endDate: istToUTC(formData.endDate),
         votingRules: formData.votingRules
       };
