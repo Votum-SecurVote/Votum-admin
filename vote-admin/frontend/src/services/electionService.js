@@ -157,6 +157,7 @@ export const electionService = {
         name: opt.name,
         party: opt.party,
         description: opt.description,
+        imageUrl: opt.imageUrl || null,
       }));
     }
 
@@ -166,6 +167,34 @@ export const electionService = {
   getElectionBallots: async (electionId) => {
     const ballots = getBallotsArray(electionId);
     return { data: ballots.slice() };
+  },
+
+  deleteBallot: async (ballotId) => {
+    for (const [electionId, ballots] of Object.entries(ballotsByElection)) {
+      const index = ballots.findIndex((b) => b.id === ballotId);
+      if (index !== -1) {
+        ballots.splice(index, 1);
+
+        // Resync candidates on the election to the latest published or last ballot
+        const election = findElection(electionId);
+        if (election) {
+          const latest = ballots[ballots.length - 1];
+          if (latest && Array.isArray(latest.options)) {
+            election.candidates = latest.options.map((opt) => ({
+              name: opt.name,
+              party: opt.party,
+              description: opt.description,
+              imageUrl: opt.imageUrl || null,
+            }));
+          } else {
+            election.candidates = [];
+          }
+        }
+
+        return { data: { success: true } };
+      }
+    }
+    throw new Error('Ballot not found');
   },
 
   publishBallot: async (ballotId) => {
@@ -221,6 +250,7 @@ export const electionService = {
           name: opt.name,
           party: opt.party,
           description: opt.description,
+          imageUrl: opt.imageUrl || null,
         }));
       }
 
