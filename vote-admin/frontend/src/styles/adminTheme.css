@@ -1,34 +1,37 @@
 :root {
-  /* Light Theme Colors */
-  --bg-primary: #f4f7fb;
-  --bg-secondary: rgba(255, 255, 255, 0.9);
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-hover: rgba(248, 250, 252, 0.9);
+  /* Brand & Surface Colors (inspired by VOTUM kiosk UI) */
+  --brand-navy: #0b2b5c;
+  --primary: #0050a4;        /* main action / primary buttons */
+  --primary-hover: #003a7c;  /* darker hover / focus */
+
+  --bg-page: #f5f7fb;        /* main app background */
+  --bg-primary: var(--bg-page);
+  --bg-secondary: #edf1f9;   /* section / sidebar */
+  --bg-card: #ffffff;        /* cards, tables, forms */
+  --bg-hover: #e4ebf7;       /* row / button hover */
   
-  /* Accent Colors */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --danger: #dc2626;
-  --info: #6366f1;
+  /* Semantic Colors */
+  --success: #147a3f;
+  --warning: #c98a1a;
+  --danger: #c62828;
+  --info: #1a4b82;
   
   /* Text Colors */
-  --text-primary: #0f172a;
-  --text-secondary: #1e293b;
+  --text-primary: #111827;
+  --text-secondary: #1f2933;
   --text-muted: #6b7280;
   
-  /* Border & Shadows */
-  --border-color: rgba(148, 163, 184, 0.5);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 16px 32px rgba(15, 23, 42, 0.12);
-  --shadow-glow: 0 0 24px rgba(37, 99, 235, 0.25);
+  /* Border & Shadows (kept subtle for official look) */
+  --border-color: #d0d7e2;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 8px 16px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 0 3px rgba(0, 80, 164, 0.25);
   
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(148, 163, 184, 0.4);
-  --glass-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  /* Glassmorphism (used sparingly) */
+  --glass-bg: rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(208, 215, 226, 0.9);
+  --glass-shadow: var(--shadow-lg);
   
   /* Spacing */
   --radius-sm: 8px;
@@ -49,7 +52,7 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at top left, #e0f2fe 0%, #eff6ff 35%, #f9fafb 70%);
+  background: var(--bg-page);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
