@@ -9,6 +9,8 @@
   --bg-secondary: #edf1f9;   /* section / sidebar */
   --bg-card: #ffffff;        /* cards, tables, forms */
   --bg-hover: #e4ebf7;       /* row / button hover */
+  --field-bg: #f9fafb;       /* input backgrounds */
+  --field-border: #cbd5e1;
   
   /* Semantic Colors */
   --success: #147a3f;
