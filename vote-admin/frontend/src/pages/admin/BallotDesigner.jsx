@@ -16,7 +16,7 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: var(--bg-page);
 `;
 
 const Header = styled.div`
@@ -35,12 +35,12 @@ const Header = styled.div`
 `;
 
 const Card = styled(motion.div)`
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 1.5rem 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 `;
 
 const InfoBanner = styled.div`
@@ -48,8 +48,8 @@ const InfoBanner = styled.div`
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  background: ${(p) => (p.$type === 'warning' ? '#fef3c7' : '#dbeafe')};
-  border-left: 4px solid ${(p) => (p.$type === 'warning' ? '#f59e0b' : '#2563eb')};
+  background: ${(p) => (p.$type === 'warning' ? '#fef3c7' : 'var(--bg-secondary)')};
+  border-left: 4px solid ${(p) => (p.$type === 'warning' ? 'var(--warning)' : 'var(--primary)')};
   border-radius: 8px;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
@@ -67,7 +67,7 @@ const Select = styled.select`
   max-width: 400px;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   border-radius: 10px;
   background: white;
   cursor: pointer;
@@ -80,7 +80,7 @@ const Select = styled.select`
 
   &:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--primary);
   }
 `;
 
@@ -105,9 +105,9 @@ const Button = styled(motion.button)`
   transition: transform 0.2s, box-shadow 0.2s;
 
   &.primary {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
     color: white;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    box-shadow: var(--shadow-md);
   }
 
   &.primary:hover:not(:disabled) {
@@ -116,9 +116,9 @@ const Button = styled(motion.button)`
   }
 
   &.success {
-    background: linear-gradient(135deg, #16a34a, #15803d);
+    background: linear-gradient(135deg, var(--success), #15803d);
     color: white;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
+    box-shadow: var(--shadow-md);
   }
 
   &.success:hover:not(:disabled) {
@@ -129,7 +129,7 @@ const Button = styled(motion.button)`
   &.secondary {
     background: #f1f5f9;
     color: #475569;
-    border: 2px solid #e2e8f0;
+    border: 1px solid var(--border-color);
   }
 
   &.secondary:hover:not(:disabled) {
@@ -169,9 +169,9 @@ const CandidateItem = styled(Reorder.Item)`
 `;
 
 const CandidateCard = styled.div`
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   padding: 1rem 1.25rem;
   display: flex;
   justify-content: space-between;
@@ -185,7 +185,7 @@ const CandidateCard = styled.div`
 
 const AddCandidateForm = styled.div`
   background: #f8fafc;
-  border: 2px dashed #cbd5e1;
+  border: 2px dashed var(--border-color);
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
@@ -195,38 +195,36 @@ const Input = styled.input`
   padding: 0.65rem 0.9rem;
   width: 100%;
   margin-bottom: 0.6rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
 
   &:focus {
     outline: none;
-    border-color: #2563eb;
-  }
+    border-color: var(--primary);
 `;
 
 const TextArea = styled.textarea`
   padding: 0.65rem 0.9rem;
   width: 100%;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
   min-height: 60px;
 
   &:focus {
     outline: none;
-    border-color: #2563eb;
-  }
+    border-color: var(--primary);
 `;
 
 const SuccessMessage = styled(motion.div)`
-  background: linear-gradient(135deg, #16a34a, #15803d);
+  background: linear-gradient(135deg, var(--success), #15803d);
   color: white;
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
+  box-shadow: var(--shadow-md);
 
   h3 {
     margin: 0 0 0.5rem 0;
@@ -257,7 +255,7 @@ const SuccessMessage = styled(motion.div)`
 const ExistingVersions = styled.div`
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 
   h4 {
     margin: 0 0 0.75rem 0;
