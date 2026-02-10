@@ -1,7 +1,100 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import { loginAdmin } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
+
+const Page = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-page);
+`;
+
+const Card = styled.div`
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+`;
+
+const Title = styled.h2`
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+`;
+
+const Label = styled.label`
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const Input = styled.input`
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: #ffffff;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
+  }
+`;
+
+const PrimaryButton = styled.button`
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-hover);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:disabled {
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+`;
+
+const ErrorBox = styled.div`
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  color: var(--danger);
+  font-size: 0.85rem;
+`;
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -34,50 +127,41 @@ const Login = () => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '2rem' }}>
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <h2>Admin Login</h2>
-        
-        {error && (
-          <div style={{ padding: '0.75rem', background: '#fee', color: '#c00', borderRadius: '4px' }}>
-            {error}
-          </div>
-        )}
-        
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          required
-          style={{ padding: '0.75rem', fontSize: '1rem', borderRadius: '4px', border: '1px solid #ccc' }}
-        />
-        
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          style={{ padding: '0.75rem', fontSize: '1rem', borderRadius: '4px', border: '1px solid #ccc' }}
-        />
-        
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ 
-            padding: '0.75rem', 
-            fontSize: '1rem', 
-            background: loading ? '#ccc' : '#2563eb', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px', 
-            cursor: loading ? 'not-allowed' : 'pointer' 
-          }}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-    </div>
+    <Page>
+      <Card>
+        <Title>Admin Login</Title>
+        <Form onSubmit={submit}>
+          {error && <ErrorBox>{error}</ErrorBox>}
+
+          <Field>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              placeholder="Enter your admin username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </Field>
+
+          <Field>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </Field>
+
+          <PrimaryButton type="submit" disabled={loading}>
+            {loading ? 'Logging in…' : 'Login'}
+          </PrimaryButton>
+        </Form>
+      </Card>
+    </Page>
   );
 };
 
