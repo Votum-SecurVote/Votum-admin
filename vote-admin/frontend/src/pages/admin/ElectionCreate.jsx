@@ -170,6 +170,37 @@ const TextArea = styled.textarea`
   }
 `;
 
+const DateField = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const DateInput = styled(Input)`
+  padding-right: 2.5rem;
+`;
+
+const DateIcon = styled.button`
+  position: absolute;
+  right: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--primary);
+  }
+`;
+
 const Button = styled(motion.button)`
   padding: 0.875rem 1.5rem;
   border-radius: var(--radius-md);
@@ -388,26 +419,46 @@ const ElectionCreate = () => {
                 <Label>
                   <FiCalendar /> Start Date (IST)
                 </Label>
-                <Input
-                  type="datetime-local"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  required
-                />
+                <DateField>
+                  <DateInput
+                    id="startDate"
+                    type="datetime-local"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    required
+                  />
+                  <DateIcon
+                    type="button"
+                    onClick={() => document.getElementById('startDate')?.focus()}
+                    aria-label="Open start date picker"
+                  >
+                    <FiCalendar size={16} />
+                  </DateIcon>
+                </DateField>
               </FormGroup>
 
               <FormGroup>
                 <Label>
                   <FiClock /> End Date (IST)
                 </Label>
-                <Input
-                  type="datetime-local"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  required
-                />
+                <DateField>
+                  <DateInput
+                    id="endDate"
+                    type="datetime-local"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    required
+                  />
+                  <DateIcon
+                    type="button"
+                    onClick={() => document.getElementById('endDate')?.focus()}
+                    aria-label="Open end date picker"
+                  >
+                    <FiCalendar size={16} />
+                  </DateIcon>
+                </DateField>
               </FormGroup>
             </div>
 
