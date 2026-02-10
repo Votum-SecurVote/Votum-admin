@@ -198,10 +198,13 @@ const Input = styled.input`
   border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 1rem;
+  background: var(--field-bg);
+  color: var(--text-primary);
 
   &:focus {
     outline: none;
     border-color: var(--primary);
+    background: #ffffff;
   }
 `;
 
@@ -212,10 +215,13 @@ const TextArea = styled.textarea`
   border-radius: 8px;
   font-size: 1rem;
   min-height: 60px;
+   background: var(--field-bg);
+   color: var(--text-primary);
 
   &:focus {
     outline: none;
     border-color: var(--primary);
+    background: #ffffff;
   }
 `;
 
