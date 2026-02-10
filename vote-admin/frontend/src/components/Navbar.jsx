@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { FiPlus, FiEdit, FiEye, FiLogIn, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
+// Fixed top nav bar shared by admin + public views
 const Nav = styled.nav`
   position: fixed;
   top: 0;
@@ -108,6 +109,8 @@ const AuthButton = styled.button`
   }
 `;
 
+// Navbar – shows brand, "Create / Ballot / View" tabs
+// and Login / Logout button based on admin auth status.
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
