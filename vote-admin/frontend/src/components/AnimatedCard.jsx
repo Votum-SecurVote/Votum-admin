@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
+// Reusable elevated card with a subtle entrance + hover animation
 const CardContainer = styled(motion.div)`
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -16,6 +17,7 @@ const CardContainer = styled(motion.div)`
   }
 `;
 
+// Wraps children in the animated card container
 const AnimatedCard = ({ children, delay = 0, ...props }) => {
   return (
     <CardContainer
