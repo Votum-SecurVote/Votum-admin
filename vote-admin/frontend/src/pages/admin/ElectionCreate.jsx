@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { FiCalendar, FiClock, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiCheck, FiArrowRight, FiFileText, FiShield } from 'react-icons/fi';
 import electionService from '../../services/electionService';
 import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
@@ -26,6 +26,97 @@ const PageContainer = styled.div`
   padding: 2rem;
   min-height: 100vh;
   background: var(--bg-page);
+`;
+
+const Layout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
+  gap: 2rem;
+  align-items: flex-start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SummaryCard = styled(motion.div)`
+  background: linear-gradient(145deg, var(--primary) 0%, var(--primary-hover) 60%, #002855 100%);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.5rem;
+  color: #f9fafb;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 55%),
+      radial-gradient(circle at bottom left, rgba(15,23,42,0.18), transparent 55%);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+`;
+
+const SummaryContent = styled.div`
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SummaryHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+`;
+
+const SummaryPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.35);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+`;
+
+const SummaryList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+`;
+
+const SummaryItem = styled.li`
+  opacity: 0.9;
+
+  span {
+    font-weight: 600;
+  }
+`;
+
+const SummaryFooter = styled.div`
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.25);
+  font-size: 0.8rem;
+  opacity: 0.9;
 `;
 
 const Form = styled(motion.form)`
@@ -163,38 +254,204 @@ const ElectionCreate = () => {
 
   return (
     <PageContainer>
-      <AnimatedCard>
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>Election Title</Label>
-            <Input name="title" value={formData.title} onChange={handleChange} required />
-          </FormGroup>
+      <Layout>
+        <SummaryCard
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <SummaryContent>
+            <SummaryHeader>
+              <FiShield size={24} />
+              <div>
+                <h2>Election Summary</h2>
+                <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+                  Preview key details as you configure this election.
+                </div>
+              </div>
+            </SummaryHeader>
 
-          <FormGroup>
-            <Label>Description</Label>
-            <TextArea name="description" value={formData.description} onChange={handleChange} />
-          </FormGroup>
+            <SummaryPill>
+              <FiFileText size={14} />
+              <span>Step 1 of 3 · Basics</span>
+            </SummaryPill>
 
-          <FormGroup>
-            <Label><FiCalendar /> Start Date (IST)</Label>
-            <Input type="datetime-local" name="startDate" value={formData.startDate} onChange={handleChange} required />
-          </FormGroup>
+            <SummaryList>
+              <SummaryItem>
+                Title: <span>{formData.title || 'Untitled election'}</span>
+              </SummaryItem>
+              <SummaryItem>
+                Window:{' '}
+                <span>
+                  {formData.startDate && formData.endDate
+                    ? 'Scheduled'
+                    : 'Not scheduled yet'}
+                </span>
+              </SummaryItem>
+              <SummaryItem>
+                Rules:{' '}
+                <span>{formData.votingRules ? 'Custom rules set' : 'Default rules'}</span>
+              </SummaryItem>
+            </SummaryList>
 
-          <FormGroup>
-            <Label><FiClock /> End Date (IST)</Label>
-            <Input type="datetime-local" name="endDate" value={formData.endDate} onChange={handleChange} required />
-          </FormGroup>
+            <SummaryFooter>
+              All configuration changes on this screen are saved only when you create the
+              election. You can refine ballots and publishing in later steps.
+            </SummaryFooter>
+          </SummaryContent>
+        </SummaryCard>
 
-          <FormGroup>
-            <Label>Voting Rules</Label>
-            <TextArea name="votingRules" value={formData.votingRules} onChange={handleChange} />
-          </FormGroup>
+        <AnimatedCard as="section">
+          <div
+            style={{
+              borderBottom: `1px solid var(--border-color)`,
+              paddingBottom: '1rem',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.8rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--text-muted)',
+                marginBottom: '0.3rem',
+              }}
+            >
+              Step 1 of 3
+            </div>
+            <h1
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Create New Election
+            </h1>
+          </div>
 
-          <Button type="submit">
-            Create Election <FiArrowRight />
-          </Button>
-        </Form>
-      </AnimatedCard>
+          <Form onSubmit={handleSubmit}>
+            {/* Basics */}
+            <div style={{ marginBottom: '1rem' }}>
+              <h3
+                style={{
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                Basics
+              </h3>
+              <FormGroup>
+                <Label>Election Title</Label>
+                <Input name="title" value={formData.title} onChange={handleChange} required />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Description</Label>
+                <TextArea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </FormGroup>
+            </div>
+
+            <hr
+              style={{
+                border: 'none',
+                borderTop: '1px solid var(--border-color)',
+                margin: '0 0 1.25rem',
+              }}
+            />
+
+            {/* Scheduling */}
+            <div style={{ marginBottom: '1rem' }}>
+              <h3
+                style={{
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                Scheduling
+              </h3>
+
+              <FormGroup>
+                <Label>
+                  <FiCalendar /> Start Date (IST)
+                </Label>
+                <Input
+                  type="datetime-local"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>
+                  <FiClock /> End Date (IST)
+                </Label>
+                <Input
+                  type="datetime-local"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  required
+                />
+              </FormGroup>
+            </div>
+
+            <hr
+              style={{
+                border: 'none',
+                borderTop: '1px solid var(--border-color)',
+                margin: '0 0 1.25rem',
+              }}
+            />
+
+            {/* Rules */}
+            <div>
+              <h3
+                style={{
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--text-muted)',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                Rules
+              </h3>
+              <FormGroup>
+                <Label>Voting Rules</Label>
+                <TextArea
+                  name="votingRules"
+                  value={formData.votingRules}
+                  onChange={handleChange}
+                  placeholder="e.g. One vote per voter, simple majority wins."
+                />
+              </FormGroup>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <Button type="submit">
+                Continue to Ballot Design <FiArrowRight />
+              </Button>
+            </div>
+          </Form>
+        </AnimatedCard>
+      </Layout>
     </PageContainer>
   );
 };
