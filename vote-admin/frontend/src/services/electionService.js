@@ -27,12 +27,13 @@ const makeId = () =>
   const electionId = makeId();
   const demoElection = {
     _id: electionId,
-    title: 'Student Council Election 2026',
-    description: 'Demo election so the UI works without any backend.',
+    title: 'Demo Election for Ballot Designer',
+    description: 'Static mock election so you can design ballots without any backend or database.',
     startDate: start.toISOString(),
     endDate: end.toISOString(),
-    votingRules: 'One vote per voter. Top candidate wins.',
-    isPublished: true,
+    votingRules: 'Pick exactly one candidate.',
+    // Keep this in draft so Ballot Designer can always create new versions
+    isPublished: false,
     candidates: [
       { name: 'Alice Johnson', party: 'Unity Party', description: 'Focus on transparency and student wellbeing.' },
       { name: 'Rahul Verma', party: 'Progressive Front', description: 'Tech upgrades and better campus services.' },
