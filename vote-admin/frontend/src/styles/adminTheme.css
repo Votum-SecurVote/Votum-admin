@@ -1,5 +1,5 @@
 :root {
-  /* Brand & Surface Colors (inspired by VOTUM kiosk UI) */
+  /* Brand & Surface Colors (global palette for all admin pages) */
   --brand-navy: #0b2b5c;
   --primary: #0050a4;        /* main action / primary buttons */
   --primary-hover: #003a7c;  /* darker hover / focus */
