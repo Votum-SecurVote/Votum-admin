@@ -10,7 +10,9 @@ import electionService from '../../services/electionService';
 import Loader from '../../components/Loader';
 
 /* =====================
-   UTC → IST display
+   Time helpers
+   - formatIST: shows stored UTC timestamps in IST for the admin
+   - getProgress: drives the "progress" bar for an election
 ===================== */
 const formatIST = (utc) => {
   if (!utc) return '—';
@@ -33,7 +35,8 @@ const getProgress = (startDate, endDate) => {
 };
 
 /* =====================
-   STYLES
+   Dashboard layout + card styles
+   for "Election Dashboard" (Step 3 of 3)
 ===================== */
 const Page = styled.div`
   min-height: 100vh;
@@ -454,6 +457,8 @@ const getInitials = (name) => {
   return (first + last).toUpperCase();
 };
 
+// ElectionView – admin dashboard (Step 3)
+// Shows election list, details, candidates and ballot history.
 const ElectionView = () => {
   const [elections, setElections] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -467,6 +472,7 @@ const ElectionView = () => {
     return () => clearInterval(t);
   }, []);
 
+  // Initial load of all elections for the left-hand list.
   const loadElections = async () => {
     try {
       const res = await electionService.getAdminElections();
@@ -481,6 +487,7 @@ const ElectionView = () => {
     }
   };
 
+  // Load all ballot versions for whichever election is selected.
   const loadBallots = async (electionId) => {
     if (!electionId) return;
     try {
@@ -502,6 +509,8 @@ const ElectionView = () => {
     }
   }, [selected]);
 
+  // Returns "draft" / "published" / "active" / "ended"
+  // for a single election, used to show the colored badge.
   const statusOf = (e) => {
     const startDate = e.startDate ?? e.start_date;
     const endDate = e.endDate ?? e.end_date;
@@ -515,6 +524,7 @@ const ElectionView = () => {
     return 'published';
   };
 
+  // Top-right action: publish the selected election
   const handlePublish = async () => {
     if (!selected) return;
     setActionLoading(true);
@@ -529,6 +539,7 @@ const ElectionView = () => {
     }
   };
 
+  // Top-right action: unpublish the selected election
   const handleUnpublish = async () => {
     if (!selected) return;
     setActionLoading(true);
@@ -543,6 +554,8 @@ const ElectionView = () => {
     }
   };
 
+  // Top-right action: delete the selected election entirely
+  // (this also clears its ballots in the mock service).
   const handleDelete = async () => {
     if (!selected) return;
     if (!confirm(`Delete "${selected.title}"? This cannot be undone.`)) return;
@@ -558,6 +571,7 @@ const ElectionView = () => {
     }
   };
 
+  // Per-version action: publish a ballot version
   const handlePublishBallot = async (ballotId) => {
     setActionLoading(true);
     try {
@@ -572,6 +586,7 @@ const ElectionView = () => {
     }
   };
 
+  // Per-version action: unpublish a ballot version
   const handleUnpublishBallot = async (ballotId) => {
     setActionLoading(true);
     try {
@@ -586,6 +601,8 @@ const ElectionView = () => {
     }
   };
 
+  // Per-version action: rollback – clones an older version into
+  // a brand new ballot version (v+1) based on targetVersion.
   const handleRollback = async (ballotId, targetVersion) => {
     if (!confirm(`Rollback to version ${targetVersion}? This will create a new ballot version.`)) return;
     setActionLoading(true);
@@ -601,6 +618,7 @@ const ElectionView = () => {
     }
   };
 
+  // Per-version action: delete a single ballot version from history.
   const handleDeleteBallot = async (ballotId) => {
     if (!confirm('Delete this ballot version? This cannot be undone.')) return;
     setActionLoading(true);
