@@ -18,7 +18,7 @@ const istToUTC = (dateTimeLocalStr) => {
 };
 
 /* =========================
-   STYLES (UNCHANGED)
+   STYLES
 ========================= */
 const PageContainer = styled.div`
   max-width: 800px;
@@ -42,19 +42,41 @@ const FormGroup = styled.div`
 
 const Label = styled.label`
   font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
 `;
 
 const Input = styled.input`
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
+    background: #ffffff;
+  }
 `;
 
 const TextArea = styled.textarea`
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
   min-height: 120px;
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
+    background: #ffffff;
+  }
 `;
 
 const Button = styled(motion.button)`
