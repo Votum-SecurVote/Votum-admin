@@ -9,7 +9,10 @@ import electionService from '../../services/electionService';
 import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
 
-/* -------------------- Styled Components -------------------- */
+/* ------------------------------------------------------------
+   Ballot Designer styles
+   - Page layout, controls and candidate cards for Step 2 (Ballot)
+------------------------------------------------------------- */
 
 const PageContainer = styled.div`
   max-width: 1000px;
@@ -353,7 +356,7 @@ const ExistingVersions = styled.div`
   }
 `;
 
-/* -------------------- Component -------------------- */
+/* -------------------- Helper: initials for avatar -------------------- */
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -363,6 +366,11 @@ const getInitials = (name) => {
   return (first + last).toUpperCase();
 };
 
+/* ------------------------------------------------------------
+   BallotDesigner component
+   - Step 2 of 3 in the admin flow
+   - Lets the admin design ballot versions and candidates
+------------------------------------------------------------- */
 const BallotDesigner = () => {
   const [elections, setElections] = useState([]);
   const [electionId, setElectionId] = useState('');
@@ -381,7 +389,8 @@ const BallotDesigner = () => {
   const [success, setSuccess] = useState(null); // { version, ballotId }
   const [loadError, setLoadError] = useState('');
 
-  /* Load admin elections */
+  // Load all admin elections so the dropdown can select which
+  // election we are designing a ballot for.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -403,7 +412,8 @@ const BallotDesigner = () => {
     return () => { cancelled = true; };
   }, []);
 
-  /* When electionId changes, load election details and ballots */
+  // When the selected electionId changes, fetch that election's
+  // details and all existing ballot versions.
   useEffect(() => {
     if (!electionId) {
       setSelectedElection(null);
@@ -448,6 +458,8 @@ const BallotDesigner = () => {
     ? (selectedElection.isPublished ?? selectedElection.is_published) === false
     : true;
 
+  // Validation helper – prevents duplicate candidate
+  // (same name + party, case-insensitive) within one ballot.
   const hasDuplicateCandidate = (list) => {
     const seen = new Set();
     for (const c of list) {
@@ -465,6 +477,8 @@ const BallotDesigner = () => {
     return null;
   };
 
+  // Add candidate from the "New candidate" form box into the
+  // current in-progress ballot version (local candidates list).
   const addCandidate = () => {
     const name = newCandidate.name?.trim();
     const party = newCandidate.party?.trim();
@@ -490,6 +504,8 @@ const BallotDesigner = () => {
     setCandidates(candidates.filter((c) => c.id !== id));
   };
 
+  // Save button handler – creates a new ballot version (vX)
+  // for the selected election, including party logo imageUrl.
   const saveBallot = async () => {
     if (candidates.length < 2) {
       alert('At least 2 candidates are required');
