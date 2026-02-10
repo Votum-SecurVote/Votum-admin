@@ -276,15 +276,15 @@ const Button = styled.button`
 const BallotHistory = styled.div`
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 2px solid #e5e7eb;
+  border-top: 2px solid var(--border-color);
 
   h3 {
     display: flex;
     align-items: center;
     gap: 0.8rem;
     margin-bottom: 1.5rem;
-    color: #1f2937;
-    font-size: 1.3rem;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
 
     svg {
       color: var(--primary);
@@ -403,7 +403,7 @@ const StatCard = styled(Card)`
 
   .stat-icon {
     font-size: 2.5rem;
-    color: #667eea;
+    color: var(--primary);
     margin-bottom: 0.5rem;
   }
 
