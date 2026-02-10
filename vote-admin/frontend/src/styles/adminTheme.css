@@ -58,6 +58,10 @@ body {
   overflow-x: hidden;
 }
 
+.app {
+  padding-top: 64px; /* account for fixed navbar */
+}
+
 /* Glassmorphism Effects */
 .glass {
   background: var(--glass-bg);
