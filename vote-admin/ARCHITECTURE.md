@@ -13,13 +13,11 @@
 
 ## System Overview
 
-The Secure Voting System is a full-stack web application for managing elections and ballots. It follows a **React Frontend + Spring Boot Backend** architecture with PostgreSQL database.
+On this branch the project is intentionally **frontend-only**: a React admin UI that runs fully in the browser with mock data and no backend.
 
 ### Technology Stack
-- **Frontend**: React 19, Vite, React Router, Axios, Framer Motion, Styled Components
-- **Backend**: Spring Boot 3.2.5, Java 17, Spring Data JPA
-- **Database**: PostgreSQL
-- **Authentication**: JWT (JSON Web Tokens)
+- **Frontend**: React 19, Vite, React Router, Framer Motion, Styled Components
+- **Data**: In-memory mock services (no real database or API)
 
 ---
 
