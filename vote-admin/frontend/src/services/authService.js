@@ -1,20 +1,32 @@
-import axios from 'axios';
-
-const API = 'http://localhost:5000/api';
+/**
+ * UI-only mock auth service.
+ *
+ * This lets the admin UI work fully without any backend running.
+ * Your backend teammate can later replace this with real API calls.
+ */
 
 export const loginAdmin = async (username, password) => {
-  const res = await axios.post(`${API}/auth/login`, {
-    username,
-    password,
-  });
+  if (!username || !password) {
+    throw new Error('Username and password are required');
+  }
 
+  // Simulated backend response
+  const mockResponse = {
+    token: 'mock-admin-token',
+    role: 'ADMIN',
+    username,
+  };
+
+  // Persist the mock auth so AdminRoute and the rest of the UI work as usual
   localStorage.setItem(
     'auth',
     JSON.stringify({
-      token: res.data.token,
-      role: res.data.role,
+      token: mockResponse.token,
+      role: mockResponse.role,
+      username: mockResponse.username,
     })
   );
 
-  return res.data;
+  return mockResponse;
 };
+
