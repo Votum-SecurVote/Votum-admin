@@ -138,7 +138,8 @@ export const voterService = {
   },
 
   // Reject a voter (sets status to REJECTED and verification_status to REJECTED)
-  rejectVoter: async (userId) => {
+  // rejectionMessage: reason sent to the voter explaining why they were rejected
+  rejectVoter: async (userId, rejectionMessage) => {
     const voter = voters.find((v) => v.user_id === userId);
     if (!voter) {
       throw new Error('Voter not found');
@@ -146,6 +147,7 @@ export const voterService = {
     voter.status = 'REJECTED';
     voter.verification.verification_status = 'REJECTED';
     voter.verification.verified_at = new Date().toISOString();
+    voter.rejection_message = rejectionMessage || 'Your registration has been rejected. Please contact support for more information.';
     return { data: voter };
   },
 };
