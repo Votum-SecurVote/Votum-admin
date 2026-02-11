@@ -401,18 +401,30 @@ const ModalButton = styled.button`
 `;
 
 /* =====================
-   Component
+   Voter Approval Component
+   - Main page for admin to review and approve/reject newly registered voters
+   - Displays voter personal info, Aadhaar verification details, and Aadhaar card image
+   - Allows approval or rejection with rejection reason message sent to voter
 ===================== */
 const VoterApproval = () => {
+  // State: List of pending voters awaiting approval/rejection
   const [voters, setVoters] = useState([]);
+  // State: Loading indicator while fetching voters
   const [loading, setLoading] = useState(true);
+  // State: Tracks which voter action (approve/reject) is currently loading
   const [actionLoading, setActionLoading] = useState({});
+  // State: Controls rejection reason modal (open/close, voter info, rejection message)
   const [rejectModal, setRejectModal] = useState({ open: false, userId: null, voterName: '', message: '' });
 
+  // Load pending voters on component mount
   useEffect(() => {
     loadVoters();
   }, []);
 
+  /* Load pending voters from service
+     - Fetches all voters with status='PENDING' and verification_status='PENDING'
+     - Updates voters state to display in the UI
+  */
   const loadVoters = async () => {
     try {
       const res = await voterService.getPendingVoters();
@@ -425,6 +437,11 @@ const VoterApproval = () => {
     }
   };
 
+  /* Handle voter approval
+     - Called when admin clicks "Approve" button on a voter card
+     - Updates voter status to 'APPROVED' and verification_status to 'VERIFIED'
+     - Reloads voter list to remove approved voter from pending list
+  */
   const handleApprove = async (userId) => {
     setActionLoading((prev) => ({ ...prev, [userId]: true }));
     try {
@@ -438,6 +455,11 @@ const VoterApproval = () => {
     }
   };
 
+  /* Open rejection reason modal
+     - Called when admin clicks "Reject" button on a voter card
+     - Opens modal prompting admin to enter rejection reason
+     - Stores voter ID and name for the rejection action
+  */
   const openRejectModal = (userId, voterName) => {
     setRejectModal({
       open: true,
@@ -447,10 +469,20 @@ const VoterApproval = () => {
     });
   };
 
+  /* Close rejection reason modal
+     - Resets modal state when admin cancels or completes rejection
+  */
   const closeRejectModal = () => {
     setRejectModal({ open: false, userId: null, voterName: '', message: '' });
   };
 
+  /* Handle voter rejection with rejection message
+     - Called when admin submits rejection reason in modal
+     - Validates that rejection message is provided (required)
+     - Updates voter status to 'REJECTED' and stores rejection_message
+     - Rejection message will be sent to the voter (in real system via email/notification)
+     - Reloads voter list to remove rejected voter from pending list
+  */
   const handleReject = async () => {
     if (!rejectModal.message.trim()) {
       alert('Please provide a reason for rejection. This message will be sent to the voter.');
@@ -479,14 +511,22 @@ const VoterApproval = () => {
     pending: voters.filter((v) => v.status === 'PENDING').length,
   };
 
+  // Calculate stats for dashboard cards
+  const stats = {
+    total: voters.length,
+    pending: voters.filter((v) => v.status === 'PENDING').length,
+  };
+
   return (
     <Page>
       <Container>
+        {/* Page Header */}
         <Header>
           <h1>Voter Approval</h1>
           <p>Review and approve or reject newly registered voters</p>
         </Header>
 
+        {/* Stats Dashboard Cards - Shows pending review count */}
         <StatsGrid>
           <StatCard
             initial={{ opacity: 0, y: 20 }}
@@ -519,6 +559,7 @@ const VoterApproval = () => {
           </StatCard>
         </StatsGrid>
 
+        {/* Empty State - No pending voters */}
         {voters.length === 0 ? (
           <VoterCard>
             <EmptyState>
@@ -530,6 +571,7 @@ const VoterApproval = () => {
             </EmptyState>
           </VoterCard>
         ) : (
+          /* Voter Cards Grid - Displays each pending voter with full details */
           <VoterGrid>
             <AnimatePresence>
               {voters.map((voter, idx) => (
@@ -540,6 +582,7 @@ const VoterApproval = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: idx * 0.1 }}
                 >
+                  {/* Voter Card Header - Name, ID, Status Badge */}
                   <VoterHeader>
                     <div>
                       <div className="voter-name">{voter.full_name}</div>
@@ -551,6 +594,7 @@ const VoterApproval = () => {
                     </Badge>
                   </VoterHeader>
 
+                  {/* Personal Information Section - Email, Phone, Gender, DOB, Address, Registration Date */}
                   <InfoSection>
                     <h3>
                       <FiUser size={14} />
@@ -588,6 +632,7 @@ const VoterApproval = () => {
                     </InfoRow>
                   </InfoSection>
 
+                  {/* Aadhaar Verification Section - Hash, Status, Aadhaar Card Image Display */}
                   <AadhaarSection>
                     <h3>
                       <FiShield size={14} />
@@ -603,6 +648,7 @@ const VoterApproval = () => {
                       <span className="label">Status:</span>
                       <span className="value">{voter.verification.verification_status}</span>
                     </InfoRow>
+                    {/* Aadhaar Card Image Display - Shows uploaded Aadhaar card image */}
                     <AadhaarImageContainer>
                       <img
                         src={voter.verification.aadhaar_image}
@@ -614,7 +660,9 @@ const VoterApproval = () => {
                     </AadhaarImageContainer>
                   </AadhaarSection>
 
+                  {/* Action Buttons - Approve and Reject */}
                   <ActionButtons>
+                    {/* Approve Button - Immediately approves voter */}
                     <Button
                       className="approve"
                       onClick={() => handleApprove(voter.user_id)}
@@ -625,6 +673,7 @@ const VoterApproval = () => {
                       <FiCheck size={18} />
                       Approve
                     </Button>
+                    {/* Reject Button - Opens modal to enter rejection reason */}
                     <Button
                       className="reject"
                       onClick={() => openRejectModal(voter.user_id, voter.full_name)}
@@ -642,7 +691,11 @@ const VoterApproval = () => {
           </VoterGrid>
         )}
 
-        {/* Rejection Reason Modal */}
+        {/* Rejection Reason Modal - Opens when admin clicks "Reject" button
+            - Prompts admin to enter rejection reason
+            - Rejection message is required and will be sent to the voter
+            - Modal has Cancel and Confirm actions
+        */}
         <AnimatePresence>
           {rejectModal.open && (
             <ModalOverlay
@@ -661,6 +714,7 @@ const VoterApproval = () => {
                   <h2>Reject Voter Registration</h2>
                   <p>Please provide a reason for rejecting {rejectModal.voterName}'s registration. This message will be sent to the voter.</p>
                 </ModalHeader>
+                {/* Rejection Reason Text Area - Admin enters reason here */}
                 <ModalTextArea
                   placeholder="Enter rejection reason (e.g., Invalid Aadhaar document, Information mismatch, Incomplete details, etc.)"
                   value={rejectModal.message}
@@ -670,6 +724,7 @@ const VoterApproval = () => {
                   <ModalButton className="cancel" onClick={closeRejectModal}>
                     Cancel
                   </ModalButton>
+                  {/* Confirm Rejection Button - Submits rejection with message */}
                   <ModalButton
                     className="confirm"
                     onClick={handleReject}
