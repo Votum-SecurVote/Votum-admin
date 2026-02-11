@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { FiPlus, FiEdit, FiEye, FiLogIn, FiLogOut } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiShield, FiLogIn, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
 // Fixed top nav bar shared by admin + public views
@@ -121,6 +121,7 @@ const Navbar = () => {
     { to: '/admin/election/create', icon: <FiPlus />, label: 'Create', admin: true },
     { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot', admin: true },
     { to: '/admin/election/view', icon: <FiEye />, label: 'View', admin: true },
+    { to: '/admin/voters/approval', icon: <FiShield />, label: 'Voters', admin: true },
   ];
   
   const handleAuth = () => {
