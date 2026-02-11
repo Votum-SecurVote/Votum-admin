@@ -298,6 +298,108 @@ const Badge = styled.span`
   }
 `;
 
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 2rem;
+`;
+
+const ModalContent = styled(motion.div)`
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+`;
+
+const ModalHeader = styled.div`
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+`;
+
+const ModalTextArea = styled.textarea`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  min-height: 120px;
+  resize: vertical;
+  margin-bottom: 1.5rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-glow);
+    background: #ffffff;
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+`;
+
+const ModalButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+
+  &.cancel {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+
+    &:hover {
+      background: var(--bg-hover);
+    }
+  }
+
+  &.confirm {
+    background: linear-gradient(135deg, var(--danger), #b91c1c);
+    color: white;
+    box-shadow: var(--shadow-md);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(198, 40, 40, 0.5);
+    }
+  }
+`;
+
 /* =====================
    Component
 ===================== */
@@ -305,6 +407,7 @@ const VoterApproval = () => {
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [rejectModal, setRejectModal] = useState({ open: false, userId: null, voterName: '', message: '' });
 
   useEffect(() => {
     loadVoters();
@@ -335,19 +438,35 @@ const VoterApproval = () => {
     }
   };
 
-  const handleReject = async (userId) => {
-    if (!confirm('Are you sure you want to reject this voter? This action cannot be undone.')) {
+  const openRejectModal = (userId, voterName) => {
+    setRejectModal({
+      open: true,
+      userId,
+      voterName,
+      message: '',
+    });
+  };
+
+  const closeRejectModal = () => {
+    setRejectModal({ open: false, userId: null, voterName: '', message: '' });
+  };
+
+  const handleReject = async () => {
+    if (!rejectModal.message.trim()) {
+      alert('Please provide a reason for rejection. This message will be sent to the voter.');
       return;
     }
-    setActionLoading((prev) => ({ ...prev, [userId]: true }));
+
+    setActionLoading((prev) => ({ ...prev, [rejectModal.userId]: true }));
     try {
-      await voterService.rejectVoter(userId);
+      await voterService.rejectVoter(rejectModal.userId, rejectModal.message.trim());
       await loadVoters();
-      alert('Voter rejected successfully!');
+      alert(`Voter rejected successfully! A rejection message has been sent to ${rejectModal.voterName}.`);
+      closeRejectModal();
     } catch (err) {
       alert('Failed to reject voter: ' + err.message);
     } finally {
-      setActionLoading((prev) => ({ ...prev, [userId]: false }));
+      setActionLoading((prev) => ({ ...prev, [rejectModal.userId]: false }));
     }
   };
 
@@ -508,7 +627,7 @@ const VoterApproval = () => {
                     </Button>
                     <Button
                       className="reject"
-                      onClick={() => handleReject(voter.user_id)}
+                      onClick={() => openRejectModal(voter.user_id, voter.full_name)}
                       disabled={actionLoading[voter.user_id]}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -522,6 +641,47 @@ const VoterApproval = () => {
             </AnimatePresence>
           </VoterGrid>
         )}
+
+        {/* Rejection Reason Modal */}
+        <AnimatePresence>
+          {rejectModal.open && (
+            <ModalOverlay
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeRejectModal}
+            >
+              <ModalContent
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ModalHeader>
+                  <h2>Reject Voter Registration</h2>
+                  <p>Please provide a reason for rejecting {rejectModal.voterName}'s registration. This message will be sent to the voter.</p>
+                </ModalHeader>
+                <ModalTextArea
+                  placeholder="Enter rejection reason (e.g., Invalid Aadhaar document, Information mismatch, Incomplete details, etc.)"
+                  value={rejectModal.message}
+                  onChange={(e) => setRejectModal((prev) => ({ ...prev, message: e.target.value }))}
+                />
+                <ModalActions>
+                  <ModalButton className="cancel" onClick={closeRejectModal}>
+                    Cancel
+                  </ModalButton>
+                  <ModalButton
+                    className="confirm"
+                    onClick={handleReject}
+                    disabled={actionLoading[rejectModal.userId] || !rejectModal.message.trim()}
+                  >
+                    {actionLoading[rejectModal.userId] ? 'Rejecting...' : 'Reject & Send Message'}
+                  </ModalButton>
+                </ModalActions>
+              </ModalContent>
+            </ModalOverlay>
+          )}
+        </AnimatePresence>
       </Container>
     </Page>
   );
