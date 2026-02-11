@@ -3,9 +3,19 @@
  * 
  * This provides mock data for users and identity_verification tables
  * so the admin can approve or reject newly registered voters.
+ * 
+ * Features:
+ * - getPendingVoters: Returns voters awaiting admin approval
+ * - approveVoter: Approves a voter and sets verification status
+ * - rejectVoter: Rejects a voter with a rejection message sent to the voter
  */
 
-// Mock static voter data matching the database schema
+/* =====================
+   Mock Voter Data
+   - Static data matching users and identity_verification table schema
+   - Each voter has: full_name, email, phone, gender, date_of_birth, address
+   - Each voter has verification data: aadhaar_hash, verification_status, aadhaar_image
+===================== */
 const mockVoters = [
   {
     user_id: '550e8400-e29b-41d4-a716-446655440001',
@@ -109,23 +119,42 @@ const mockVoters = [
   },
 ];
 
-// In-memory store (simulates database)
+/* =====================
+   In-Memory Data Store
+   - Simulates database storage for voters
+   - All changes persist during the session
+===================== */
 let voters = [...mockVoters];
 
+/* =====================
+   Voter Service API
+   - All methods return promises to match real API behavior
+===================== */
 export const voterService = {
-  // Get all pending voters for approval
+  /* Get all pending voters for approval
+     - Filters voters with status='PENDING' and verification_status='PENDING'
+     - Used by VoterApproval page to display voters awaiting review
+  */
   getPendingVoters: async () => {
     return {
       data: voters.filter((v) => v.status === 'PENDING' && v.verification.verification_status === 'PENDING'),
     };
   },
 
-  // Get all voters (for admin view)
+  /* Get all voters (for admin view)
+     - Returns complete list of all voters regardless of status
+     - Can be used for admin dashboard or voter management
+  */
   getAllVoters: async () => {
     return { data: voters.slice() };
   },
 
-  // Approve a voter (sets status to APPROVED and verification_status to VERIFIED)
+  /* Approve a voter
+     - Sets user status to 'APPROVED'
+     - Sets verification_status to 'VERIFIED'
+     - Records verified_at timestamp
+     - Called when admin clicks "Approve" button
+  */
   approveVoter: async (userId) => {
     const voter = voters.find((v) => v.user_id === userId);
     if (!voter) {
@@ -137,8 +166,14 @@ export const voterService = {
     return { data: voter };
   },
 
-  // Reject a voter (sets status to REJECTED and verification_status to REJECTED)
-  // rejectionMessage: reason sent to the voter explaining why they were rejected
+  /* Reject a voter with rejection message
+     - Sets user status to 'REJECTED'
+     - Sets verification_status to 'REJECTED'
+     - Records verified_at timestamp
+     - Stores rejection_message that will be sent to the voter
+     - rejectionMessage: Required reason explaining why voter was rejected
+     - Called when admin clicks "Reject" and submits rejection reason modal
+  */
   rejectVoter: async (userId, rejectionMessage) => {
     const voter = voters.find((v) => v.user_id === userId);
     if (!voter) {
