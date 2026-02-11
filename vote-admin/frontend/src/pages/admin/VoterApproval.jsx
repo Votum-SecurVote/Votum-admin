@@ -506,11 +506,6 @@ const VoterApproval = () => {
     return <Loader message="Loading pending voters..." />;
   }
 
-  const stats = {
-    total: voters.length,
-    pending: voters.filter((v) => v.status === 'PENDING').length,
-  };
-
   // Calculate stats for dashboard cards
   const stats = {
     total: voters.length,
