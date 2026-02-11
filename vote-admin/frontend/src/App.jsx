@@ -10,6 +10,7 @@ import PageTransition from './components/PageTransition';
 import ElectionCreate from './pages/admin/ElectionCreate';   // Step 1 – create election + dates
 import BallotDesigner from './pages/admin/BallotDesigner';   // Step 2 – design ballot + candidates
 import ElectionView from './pages/admin/ElectionView';       // Step 3 – dashboard / manage election
+import VoterApproval from './pages/admin/VoterApproval';     // Voter approval/rejection page
 import Login from './pages/admin/Login';                     // Admin login (mock auth)
 
 // Route guard that only allows logged‑in admin users
@@ -73,6 +74,15 @@ const App = () => {
                 element={
                   <PageTransition>
                     <ElectionView mode="admin" />
+                  </PageTransition>
+                }
+              />
+
+              <Route
+                path="voters/approval"
+                element={
+                  <PageTransition>
+                    <VoterApproval />
                   </PageTransition>
                 }
               />
