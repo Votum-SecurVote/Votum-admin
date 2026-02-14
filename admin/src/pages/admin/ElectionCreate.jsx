@@ -268,8 +268,7 @@ const ElectionCreate = () => {
     title: '',
     description: '',
     startDate: '',
-    endDate: '',
-    votingRules: ''
+    endDate: ''
   });
 
   const handleChange = (e) => {
@@ -282,24 +281,26 @@ const ElectionCreate = () => {
     setLoading(true);
 
     try {
-      const payload = {
+      const election = await electionService.createElection({
         title: formData.title,
         description: formData.description,
         startDate: istToUTC(formData.startDate),
-        endDate: istToUTC(formData.endDate),
-        votingRules: formData.votingRules
-      };
+        endDate: istToUTC(formData.endDate)
+      });
 
-      const res = await electionService.createElection(payload);
-      localStorage.setItem('lastElectionId', res.data._id);
+      console.log("Election created:", election);
+
+      localStorage.setItem("lastElectionId", election.id);
 
       setSuccess(true);
+
       setTimeout(() => {
-        window.location.href = '/admin/ballot/design';
+        window.location.href = "/admin/ballot/design";
       }, 1500);
 
     } catch (err) {
-      alert(err.message || 'Failed to create election');
+      console.error(err);
+      alert("Failed to create election");
       setLoading(false);
     }
   };
@@ -379,25 +380,11 @@ const ElectionCreate = () => {
                     />
                   </FormGroup>
                 </div>
-              </Section>
-
-              <Section>
-                <h3><FiAlignLeft /> Rules & Regulations</h3>
-                <FormGroup>
-                  <label>Voting Instructions</label>
-                  <TextArea
-                    name="votingRules"
-                    placeholder="e.g. Single choice vote. Majority wins. In case of tie..."
-                    value={formData.votingRules}
-                    onChange={handleChange}
-                    style={{ minHeight: '80px' }}
-                  />
-                </FormGroup>
-
                 <Button type="submit" whileTap={{ scale: 0.98 }}>
                   Save & Continue <FiArrowRight />
                 </Button>
               </Section>
+
             </Card>
 
             {/* Right Column: Live Preview */}
@@ -419,11 +406,6 @@ const ElectionCreate = () => {
                     <FiClock />
                     <span>End: {formatDatePreview(formData.endDate)}</span>
                   </div>
-                  {formData.votingRules && (
-                    <div className="row" style={{ alignItems: 'flex-start', marginTop: '0.5rem', fontSize: '0.8rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}>
-                      <span style={{ fontWeight: 600 }}>Rules:</span> {formData.votingRules}
-                    </div>
-                  )}
                 </div>
               </LivePreviewCard>
             </PreviewContainer>
