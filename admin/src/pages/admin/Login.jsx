@@ -13,6 +13,8 @@ const Page = styled.div`
   justify-content: center;
   padding: 2rem;
   background: var(--bg-page);
+  position: fixed;
+  inset: 0;
 `;
 
 const Card = styled.div`
@@ -116,10 +118,10 @@ const Login = () => {
     try {
       const data = await loginAdmin(username, password);
       console.log('Login response:', data);
-      
+
       // Update auth context
       login({ token: data.token, role: data.role });
-      
+
       // Redirect to admin dashboard
       navigate('/admin/election/view');
     } catch (err) {

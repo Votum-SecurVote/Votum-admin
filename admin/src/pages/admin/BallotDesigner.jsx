@@ -2,808 +2,537 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import styled from 'styled-components';
 import {
-  FiPlus, FiTrash2, FiSave, FiUser, FiList, FiCheck,
-  FiRefreshCw, FiInfo, FiChevronDown
+  FiPlus, FiTrash2, FiSave, FiUser, FiCheck,
+  FiRefreshCw, FiInfo, FiUploadCloud, FiGrid, FiMenu
 } from 'react-icons/fi';
 import electionService from '../../services/electionService';
-import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
 
-/* ------------------------------------------------------------
-   Ballot Designer styles
-   - Page layout, controls and candidate cards for Step 2 (Ballot)
-------------------------------------------------------------- */
+/* --- Styled Components --- */
 
-const PageContainer = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem;
+const Page = styled.div`
   min-height: 100vh;
-  background: var(--bg-page);
+  background-color: #f8fafc; /* Slate-50 */
+  padding: 2rem;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
 `;
 
-const Header = styled.div`
-  margin-bottom: 2rem;
-
+const Header = styled.header`
+  max-width: 1200px;
+  margin: 0 auto 2rem;
+  
   h1 {
-    font-size: 2rem;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
   }
-
   p {
     color: #64748b;
-    font-size: 1rem;
+    margin-top: 0.5rem;
   }
 `;
 
-const Card = styled(motion.div)`
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 1.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: start;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const InfoBanner = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: ${(p) => (p.$type === 'warning' ? '#fef3c7' : 'var(--bg-secondary)')};
-  border-left: 4px solid ${(p) => (p.$type === 'warning' ? 'var(--warning)' : 'var(--primary)')};
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  color: #374151;
+const Section = styled.section`
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+`;
 
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-    color: ${(p) => (p.$type === 'warning' ? '#d97706' : '#1d4ed8')};
+const SectionHeader = styled.div`
+  padding: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fdfdfd;
+  
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+`;
+
+const SectionBody = styled.div`
+  padding: 1.5rem;
+`;
+
+/* Form Elements */
+const FormGroup = styled.div`
+  margin-bottom: 1rem;
+  
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  max-width: 400px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 2px solid var(--border-color);
-  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
   background: white;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 20px;
-  padding-right: 44px;
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-  }
-`;
-
-const Controls = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const Button = styled(motion.button)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
 
-  &.primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-    color: white;
-    box-shadow: var(--shadow-md);
-  }
-
-  &.primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
-  }
-
-  &.success {
-    background: linear-gradient(135deg, var(--success), #15803d);
-    color: white;
-    box-shadow: var(--shadow-md);
-  }
-
-  &.success:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
-  }
-
-  &.secondary {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid var(--border-color);
-  }
-
-  &.secondary:hover:not(:disabled) {
-    background: #e2e8f0;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
   }
 `;
 
-const VersionBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.9rem;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #3730a3;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-`;
-
-const CandidateList = styled(Reorder.Group)`
-  list-style: none;
+/* File Upload Zone */
+const UploadZone = styled.label`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0;
-  margin: 0;
-`;
-
-const CandidateItem = styled(Reorder.Item)`
-  list-style: none;
-`;
-
-const CandidateCard = styled.div`
-  background: var(--bg-card);
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  padding: 1rem 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: #cbd5e1;
-  }
-`;
-
-const AddCandidateForm = styled.div`
-  background: #f8fafc;
-  border: 2px dashed var(--border-color);
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-`;
-
-const Input = styled.input`
-  padding: 0.65rem 0.9rem;
-  width: 100%;
-  margin-bottom: 0.6rem;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 1rem;
-  background: var(--field-bg);
-  color: var(--text-primary);
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #ffffff;
-  }
-`;
-
-const TextArea = styled.textarea`
-  padding: 0.65rem 0.9rem;
-  width: 100%;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 1rem;
-  min-height: 60px;
-   background: var(--field-bg);
-   color: var(--text-primary);
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #ffffff;
-  }
-`;
-
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-const FileLabel = styled.label`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: 999px;
-  border: 1px dashed var(--border-color);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  background: #f9fafb;
-
-  &:hover {
-    background: var(--bg-hover);
-    color: var(--primary);
-  }
-`;
-
-const ImagePreview = styled.div`
-  margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-`;
-
-const PreviewThumb = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  object-fit: cover;
-  border: 1px solid var(--border-color);
-  background: #e5e7eb;
-`;
-
-const CandidateAvatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid var(--border-color);
-  background: #e5e7eb;
-  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  overflow: hidden;
-`;
-
-const CandidateAvatarImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const SuccessMessage = styled(motion.div)`
-  background: linear-gradient(135deg, var(--success), #15803d);
-  color: white;
   padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
   text-align: center;
-  box-shadow: var(--shadow-md);
 
-  h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+  &:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
   }
 
-  p {
-    margin: 0;
-    opacity: 0.95;
-    font-size: 0.95rem;
-  }
-
-  .version-saved {
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-  }
-
-  .create-another {
-    margin-top: 1rem;
-  }
+  input { display: none; }
+  
+  .icon { font-size: 1.5rem; color: #94a3b8; margin-bottom: 0.5rem; }
+  .text { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+  .sub { font-size: 0.75rem; color: #94a3b8; }
 `;
 
-const ExistingVersions = styled.div`
+const PreviewImage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
+  padding: 0.75rem;
+  background: #f1f5f9;
+  border-radius: 6px;
 
-  h4 {
-    margin: 0 0 0.75rem 0;
-    font-size: 0.95rem;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  img {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
   }
-
-  .version-chip {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    background: #f1f5f9;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-    color: #475569;
-  }
-
-  .version-chip.published {
-    background: #dcfce7;
-    color: #166534;
-    font-weight: 600;
+  
+  .name { font-size: 0.85rem; font-weight: 500; color: #334155; }
+  .remove { 
+    margin-left: auto; color: #ef4444; cursor: pointer; font-size: 0.8rem; 
+    &:hover { text-decoration: underline; }
   }
 `;
 
-/* -------------------- Helper: initials for avatar -------------------- */
+/* Buttons */
+const Button = styled(motion.button)`
+  width: ${props => props.$full ? '100%' : 'auto'};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.2s;
 
+  &.primary {
+    background: #0f172a; color: white;
+    &:hover:not(:disabled) { background: #334155; }
+  }
+  &.success {
+    background: #10b981; color: white;
+    &:hover:not(:disabled) { background: #059669; }
+  }
+  &.ghost {
+    background: transparent; color: #64748b;
+    &:hover { background: #f1f5f9; color: #334155; }
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+/* List Items */
+const ItemCard = styled.div`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+
+  .drag-handle { color: #cbd5e1; cursor: grab; font-size: 1.2rem; }
+  
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.9rem; color: #64748b;
+    overflow: hidden;
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  .content {
+    flex: 1;
+    h4 { margin: 0; font-size: 0.95rem; color: #1e293b; }
+    p { margin: 0; font-size: 0.85rem; color: #64748b; }
+  }
+
+  .actions {
+    button {
+      padding: 0.4rem;
+      color: #94a3b8;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      &:hover { background: #fee2e2; color: #ef4444; }
+    }
+  }
+`;
+
+const Alert = styled.div`
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 0.75rem;
+  
+  &.warning { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+  &.success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+`;
+
+const Badge = styled.span`
+  background: #e0f2fe; color: #0284c7;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+`;
+
+/* --- Helpers --- */
 const getInitials = (name) => {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] || '';
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toUpperCase();
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 };
 
-/* ------------------------------------------------------------
-   BallotDesigner component
-   - Step 2 of 3 in the admin flow
-   - Lets the admin design ballot versions and candidates
-------------------------------------------------------------- */
+/* --- Component --- */
 const BallotDesigner = () => {
   const [elections, setElections] = useState([]);
   const [electionId, setElectionId] = useState('');
   const [selectedElection, setSelectedElection] = useState(null);
   const [ballots, setBallots] = useState([]);
   const [nextVersion, setNextVersion] = useState(1);
+  const [loading, setLoading] = useState(true);
 
+  // Form State
   const [candidates, setCandidates] = useState([]);
-  const [newCandidate, setNewCandidate] = useState({
-    name: '',
-    party: '',
-    description: '',
-    image: null, // { src, fileName }
-  });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null); // { version, ballotId }
-  const [loadError, setLoadError] = useState('');
+  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', description: '', image: null });
+  const [success, setSuccess] = useState(null);
 
-  // Load all admin elections so the dropdown can select which
-  // election we are designing a ballot for.
+  // --- Loading Logic ---
   useEffect(() => {
-    let cancelled = false;
     const load = async () => {
       try {
         const res = await electionService.getAdminElections();
-        if (!cancelled && res.data?.length) {
-          setElections(res.data);
-          // Always fall back to the first static/mock election so this
-          // screen works even if you never created one via the form.
+        setElections(res.data || []);
+        if (res.data?.length) {
           const first = res.data[0];
-          const id = first._id || first.id;
-          setElectionId(id);
+          setElectionId(first._id || first.id);
         }
-      } catch (e) {
-        if (!cancelled) setLoadError(e.message || 'Failed to load elections');
-      }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
     load();
-    return () => { cancelled = true; };
   }, []);
 
-  // When the selected electionId changes, fetch that election's
-  // details and all existing ballot versions.
   useEffect(() => {
     if (!electionId) {
-      setSelectedElection(null);
-      setBallots([]);
-      setNextVersion(1);
-      return;
+      setSelectedElection(null); setBallots([]); setNextVersion(1); return;
     }
-    let cancelled = false;
     const load = async () => {
       try {
-        const [electionRes, ballotsRes] = await Promise.all([
+        const [elRes, balRes] = await Promise.all([
           electionService.getAdminElections(),
-          electionService.getElectionBallots(electionId),
+          electionService.getElectionBallots(electionId)
         ]);
-        if (cancelled) return;
-        const list = electionRes.data || [];
-        const el = list.find((e) => (e._id || e.id) === electionId);
-        setSelectedElection(el || null);
-        const ballotList = ballotsRes.data || [];
-        setBallots(ballotList);
-        const maxV = ballotList.length
-          ? Math.max(...ballotList.map((b) => b.version || 0))
-          : 0;
+        const el = (elRes.data || []).find(e => (e._id || e.id) === electionId);
+        setSelectedElection(el);
+
+        const bList = balRes.data || [];
+        setBallots(bList);
+        const maxV = bList.length ? Math.max(...bList.map(b => b.version || 0)) : 0;
         setNextVersion(maxV + 1);
-      } catch (e) {
-        if (!cancelled) {
-          setSelectedElection(null);
-          setBallots([]);
-          setNextVersion(1);
-        }
-      }
+      } catch (e) { console.error(e); }
     };
     load();
-    return () => { cancelled = true; };
   }, [electionId]);
 
-  /* Redirect if no elections at all */
-  // In UI-only mode we seed a static mock election in electionService,
-  // so this page will always have something to work with. No redirect.
+  const isDraft = selectedElection ? !(selectedElection.isPublished ?? selectedElection.is_published) : true;
 
-  const isDraft = selectedElection
-    ? (selectedElection.isPublished ?? selectedElection.is_published) === false
-    : true;
-
-  // Validation helper – prevents duplicate candidate
-  // (same name + party, case-insensitive) within one ballot.
-  const hasDuplicateCandidate = (list) => {
-    const seen = new Set();
-    for (const c of list) {
-      const name = (c.name || '').trim().toLowerCase();
-      const party = (c.party || '').trim().toLowerCase();
-      if (!name || !party) {
-        return 'Candidate name and party are required for every candidate';
-      }
-      const key = `${name}::${party}`;
-      if (seen.has(key)) {
-        return 'Duplicate candidate with the same name and party is not allowed (case-insensitive)';
-      }
-      seen.add(key);
-    }
-    return null;
+  // --- Handlers ---
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\/(png|jpe?g)$/.test(file.type)) return alert('PNG or JPG only');
+    setNewCandidate(p => ({ ...p, image: { src: URL.createObjectURL(file), fileName: file.name } }));
   };
 
-  // Add candidate from the "New candidate" form box into the
-  // current in-progress ballot version (local candidates list).
   const addCandidate = () => {
-    const name = newCandidate.name?.trim();
-    const party = newCandidate.party?.trim();
+    if (!newCandidate.name.trim() || !newCandidate.party.trim()) return alert('Name and Party required');
+    if (candidates.some(c => c.name.toLowerCase() === newCandidate.name.toLowerCase() && c.party.toLowerCase() === newCandidate.party.toLowerCase())) return alert('Duplicate candidate');
 
-    if (!name || !party) {
-      alert('Candidate name and party are required');
-      return;
-    }
-
-    const candidateToAdd = { ...newCandidate, name, party, id: Date.now().toString() };
-    const nextList = [...candidates, candidateToAdd];
-    const duplicateError = hasDuplicateCandidate(nextList);
-    if (duplicateError) {
-      alert(duplicateError);
-      return;
-    }
-
-    setCandidates(nextList);
+    setCandidates([...candidates, { ...newCandidate, id: Date.now().toString() }]);
     setNewCandidate({ name: '', party: '', description: '', image: null });
   };
 
-  const removeCandidate = (id) => {
-    setCandidates(candidates.filter((c) => c.id !== id));
-  };
-
-  // Save button handler – creates a new ballot version (vX)
-  // for the selected election, including party logo imageUrl.
   const saveBallot = async () => {
-    if (candidates.length < 2) {
-      alert('At least 2 candidates are required');
-      return;
-    }
-
-    const duplicateError = hasDuplicateCandidate(candidates);
-    if (duplicateError) {
-      alert(duplicateError);
-      return;
-    }
-    if (!electionId) {
-      alert('Please select an election');
-      return;
-    }
-    if (!isDraft) {
-      alert('Cannot create new ballot versions when the election is published. Unpublish the election first (from the View dashboard).');
-      return;
-    }
+    if (candidates.length < 2) return alert('Need 2+ candidates');
     setLoading(true);
     setSuccess(null);
     try {
       const res = await electionService.createBallot(electionId, {
         title: `Ballot v${nextVersion}`,
-        options: candidates.map((c) => ({
-          name: c.name?.trim(),
-          party: c.party?.trim(),
-          description: c.description,
-          imageUrl: c.image?.src || null,
+        options: candidates.map(c => ({
+          name: c.name, party: c.party, description: c.description, imageUrl: c.image?.src
         })),
         maxSelections: 1,
       });
-      const data = res.data ?? res;
-      const id = data?.id;
-      const version = data?.version ?? nextVersion;
-      setSuccess({ version, ballotId: id });
-      setBallots((prev) => [...prev, { id, version, ...data }]);
-      setNextVersion(version + 1);
+
+      setSuccess({ version: res.data?.version || nextVersion });
+      setBallots(p => [...p, { ...(res.data || {}), id: res.data?.id, version: nextVersion }]);
+      setNextVersion(prev => prev + 1);
       setCandidates([]);
-    } catch (err) {
-      alert(err.message || 'Failed to save ballot');
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { alert(e.message); }
+    finally { setLoading(false); }
   };
 
-  const createAnotherVersion = () => {
-    setSuccess(null);
-  };
-
-  const publishElection = async () => {
-    if (!electionId) return;
-    try {
-      await electionService.publishElection(electionId);
-      alert('Election published successfully');
-      const res = await electionService.getAdminElections();
-      const list = res.data || [];
-      const el = list.find((e) => (e._id || e.id) === electionId);
-      setSelectedElection(el || null);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  if (loadError && elections.length === 0) {
-    return (
-      <PageContainer>
-        <Header>
-          <h1>Ballot Designer</h1>
-          <p>Create and manage ballot versions</p>
-        </Header>
-        <InfoBanner $type="warning">
-          <FiInfo />
-          <span>{loadError}</span>
-        </InfoBanner>
-        <Button className="secondary" onClick={() => window.location.href = '/admin/election/create'}>
-          Create an election first
-        </Button>
-      </PageContainer>
-    );
-  }
-
-  if (loading) {
-    return <Loader message="Saving ballot..." />;
-  }
+  if (loading && !elections.length) return <Loader message="Loading Designer..." />;
 
   return (
-    <PageContainer>
+    <Page>
       <Header>
-        <div
-          style={{
-            fontSize: '0.8rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
-            color: 'var(--text-muted)',
-            marginBottom: '0.3rem',
-          }}
-        >
-          Step 2 of 3
-        </div>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94a3b8', marginBottom: '0.5rem' }}>Step 2 of 3</div>
         <h1>Ballot Designer</h1>
-        <p>Create and manage ballot versions for an election</p>
+        <p>Configure candidates and generate ballot versions.</p>
       </Header>
 
-      <Card>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
-          Select election
-        </label>
-        <Select
-          value={electionId}
-          onChange={(e) => {
-            setElectionId(e.target.value);
-          }}
-        >
-          <option value="">-- Choose election --</option>
-          {elections.map((e) => (
-            <option key={e._id ?? e.id} value={e._id ?? e.id}>
-              {e.title} {e.isPublished || e.is_published ? '(Published)' : '(Draft)'}
-            </option>
-          ))}
-        </Select>
-
-        {selectedElection && (
-          <ExistingVersions>
-            <h4>
-              <FiList /> Existing ballot versions: {ballots.length}
-              {ballots.length > 0 && ` (next will be Version ${nextVersion})`}
-            </h4>
-            {ballots.map((b) => (
-              <span
-                key={b.id}
-                className={`version-chip ${b.isPublished ? 'published' : ''}`}
-                title={b.isPublished ? 'Currently published' : 'Draft'}
-              >
-                v{b.version} {b.isPublished ? '✓ Published' : ''}
-              </span>
-            ))}
-          </ExistingVersions>
-        )}
-      </Card>
-
+      {/* Global Alerts */}
       {!isDraft && (
-        <InfoBanner $type="warning">
-          <FiInfo />
-          <span>
-            <strong>Election is published.</strong> New ballot versions can only be created when the election is in <strong>Draft</strong>. Unpublish the election from the <strong>View</strong> dashboard if you need to add more versions.
-          </span>
-        </InfoBanner>
+        <Alert className="warning" style={{ maxWidth: '1200px', margin: '0 auto 2rem' }}>
+          <FiInfo size={20} />
+          <div>
+            <strong>Election is Published.</strong> You must unpublish the election from the dashboard before adding new ballot versions.
+          </div>
+        </Alert>
       )}
 
-      <AnimatePresence>
-        {success && (
-          <SuccessMessage
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <h3>
-              <FiCheck size={24} /> Ballot saved
-            </h3>
-            <p className="version-saved">Version {success.version} created successfully.</p>
-            <p>You can publish or rollback this version from the View dashboard.</p>
-            <div className="create-another">
-              <Button className="secondary" onClick={createAnotherVersion}>
-                <FiRefreshCw /> Create another version
+      {success && (
+        <Alert className="success" style={{ maxWidth: '1200px', margin: '0 auto 2rem' }}>
+          <FiCheck size={20} />
+          <div>
+            <strong>Success!</strong> Version {success.version} created.
+            <span style={{ marginLeft: '1rem', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setSuccess(null)}>Create another</span>
+          </div>
+        </Alert>
+      )}
+
+      <Grid>
+        {/* LEFT COLUMN: Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* 1. Select Election */}
+          <Section>
+            <SectionHeader><h3><FiGrid /> Select Election</h3></SectionHeader>
+            <SectionBody>
+              <Select value={electionId} onChange={e => setElectionId(e.target.value)}>
+                {elections.map(e => (
+                  <option key={e._id || e.id} value={e._id || e.id}>
+                    {e.title} {e.isPublished ? '(Live)' : '(Draft)'}
+                  </option>
+                ))}
+              </Select>
+              {selectedElection && (
+                <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
+                  Current: <strong>{ballots.length}</strong> versions created.
+                  Next will be: <Badge>v{nextVersion}</Badge>
+                </div>
+              )}
+            </SectionBody>
+          </Section>
+
+          {/* 2. Add Candidate Form */}
+          <Section>
+            <SectionHeader><h3><FiUser /> New Candidate</h3></SectionHeader>
+            <SectionBody>
+              <FormGroup>
+                <label>Full Name</label>
+                <Input
+                  placeholder="e.g. Jane Doe"
+                  value={newCandidate.name}
+                  onChange={e => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>Party / Affiliation</label>
+                <Input
+                  placeholder="e.g. Independent"
+                  value={newCandidate.party}
+                  onChange={e => setNewCandidate({ ...newCandidate, party: e.target.value })}
+                />
+              </FormGroup>
+              <FormGroup>
+                <label>Description (Optional)</label>
+                <Input
+                  placeholder="Short tagline..."
+                  value={newCandidate.description}
+                  onChange={e => setNewCandidate({ ...newCandidate, description: e.target.value })}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <label>Party Logo</label>
+                {!newCandidate.image ? (
+                  <UploadZone>
+                    <div className="icon"><FiUploadCloud /></div>
+                    <div className="text">Click to upload logo</div>
+                    <div className="sub">PNG or JPG (Max 2MB)</div>
+                    <input type="file" onChange={handleFile} accept="image/png, image/jpeg" />
+                  </UploadZone>
+                ) : (
+                  <PreviewImage>
+                    <img src={newCandidate.image.src} alt="Preview" />
+                    <span className="name">{newCandidate.image.fileName}</span>
+                    <span className="remove" onClick={() => setNewCandidate(p => ({ ...p, image: null }))}>Remove</span>
+                  </PreviewImage>
+                )}
+              </FormGroup>
+
+              <Button
+                className="primary"
+                $full
+                onClick={addCandidate}
+                disabled={!isDraft}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FiPlus /> Add Candidate
+              </Button>
+            </SectionBody>
+          </Section>
+        </div>
+
+        {/* RIGHT COLUMN: Preview & Action */}
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Section style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <SectionHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3><FiMenu /> Ballot Preview (v{nextVersion})</h3>
+              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{candidates.length} Candidates</span>
+            </SectionHeader>
+
+            <SectionBody style={{ flex: 1, background: '#f8fafc' }}>
+              {candidates.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#94a3b8', padding: '3rem 0' }}>
+                  <FiUser size={48} style={{ opacity: 0.2 }} />
+                  <p>Candidate list is empty.<br />Use the form to add candidates.</p>
+                </div>
+              ) : (
+                <Reorder.Group axis="y" values={candidates} onReorder={setCandidates} style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  <AnimatePresence>
+                    {candidates.map(c => (
+                      <Reorder.Item key={c.id} value={c} style={{ marginBottom: '0.75rem' }}>
+                        <ItemCard>
+                          <div className="drag-handle">⋮⋮</div>
+                          <div className="avatar">
+                            {c.image ? <img src={c.image.src} alt="" /> : getInitials(c.name)}
+                          </div>
+                          <div className="content">
+                            <h4>{c.name}</h4>
+                            <p>{c.party}</p>
+                          </div>
+                          <div className="actions">
+                            <button onClick={() => setCandidates(candidates.filter(i => i.id !== c.id))}>
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        </ItemCard>
+                      </Reorder.Item>
+                    ))}
+                  </AnimatePresence>
+                </Reorder.Group>
+              )}
+            </SectionBody>
+
+            <div style={{ padding: '1.25rem', borderTop: '1px solid #e2e8f0', background: 'white', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <Button className="ghost" onClick={() => setCandidates([])} disabled={candidates.length === 0}>
+                Clear All
+              </Button>
+              <Button
+                className="success"
+                onClick={saveBallot}
+                disabled={candidates.length < 2 || !isDraft}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FiSave /> Save Ballot Version
               </Button>
             </div>
-          </SuccessMessage>
-        )}
-      </AnimatePresence>
-
-      <Card>
-        <Controls>
-          <Button className="primary" onClick={addCandidate}>
-            <FiPlus /> Add candidate
-          </Button>
-          <Button
-            className="success"
-            onClick={saveBallot}
-            disabled={candidates.length < 2 || !isDraft}
-          >
-            <FiSave /> Save as new version (Version {nextVersion})
-          </Button>
-          {selectedElection && (
-            <Button
-              className="secondary"
-              onClick={publishElection}
-              disabled={candidates.length < 2 || !isDraft}
-            >
-              <FiCheck /> Publish election
-            </Button>
-          )}
-        </Controls>
-
-        <AddCandidateForm>
-          <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#334155' }}>New candidate</h3>
-          <Input
-            placeholder="Name"
-            value={newCandidate.name}
-            onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
-          />
-          <Input
-            placeholder="Party"
-            value={newCandidate.party}
-            onChange={(e) => setNewCandidate({ ...newCandidate, party: e.target.value })}
-          />
-          <TextArea
-            placeholder="Description (optional)"
-            value={newCandidate.description}
-            onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
-          />
-          <div style={{ marginTop: '0.5rem' }}>
-            <HiddenFileInput
-              id="candidate-image"
-              type="file"
-              accept="image/png,image/jpeg"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                if (!/^image\/(png|jpe?g)$/.test(file.type)) {
-                  alert('Please upload a PNG or JPG image for the party logo.');
-                  return;
-                }
-                const src = URL.createObjectURL(file);
-                setNewCandidate((prev) => ({
-                  ...prev,
-                  image: { src, fileName: file.name },
-                }));
-              }}
-            />
-            <FileLabel htmlFor="candidate-image">
-              <FiUser />
-              {newCandidate.image ? 'Change party logo' : 'Upload party logo (PNG/JPG, optional)'}
-            </FileLabel>
-
-            {newCandidate.image && (
-              <ImagePreview>
-                <PreviewThumb src={newCandidate.image.src} alt="Party logo preview" />
-                <span>{newCandidate.image.fileName}</span>
-              </ImagePreview>
-            )}
-          </div>
-          <Button className="secondary" onClick={addCandidate} style={{ marginTop: '0.5rem' }}>
-            <FiPlus /> Add to list
-          </Button>
-        </AddCandidateForm>
-
-        {candidates.length === 0 ? (
-          <AnimatedCard>
-            <p style={{ color: '#64748b', margin: 0 }}>No candidates added yet. Add at least 2 to save a new version.</p>
-          </AnimatedCard>
-        ) : (
-          <>
-            <p style={{ marginBottom: '0.75rem', fontWeight: 600, color: '#475569' }}>
-              Candidates in this version ({candidates.length})
-            </p>
-            <CandidateList axis="y" values={candidates} onReorder={setCandidates}>
-              {candidates.map((c) => (
-                <CandidateItem key={c.id} value={c}>
-                  <CandidateCard>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <CandidateAvatar>
-                        {c.image?.src ? (
-                          <CandidateAvatarImage
-                            src={c.image.src}
-                            alt={`${c.party || c.name} logo`}
-                          />
-                        ) : (
-                          <span>{getInitials(c.name)}</span>
-                        )}
-                      </CandidateAvatar>
-                      <div>
-                        <strong>{c.name}</strong>
-                        <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{c.party}</div>
-                        {c.description && (
-                          <div
-                            style={{
-                              color: '#94a3b8',
-                              fontSize: '0.85rem',
-                              marginTop: '0.25rem',
-                            }}
-                          >
-                            {c.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button className="secondary" onClick={() => removeCandidate(c.id)}>
-                      <FiTrash2 />
-                    </Button>
-                  </CandidateCard>
-                </CandidateItem>
-              ))}
-            </CandidateList>
-          </>
-        )}
-      </Card>
-    </PageContainer>
+          </Section>
+        </div>
+      </Grid>
+    </Page>
   );
 };
 

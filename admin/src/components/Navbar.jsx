@@ -116,23 +116,23 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
-  
+
   const navItems = [
     { to: '/admin/election/create', icon: <FiPlus />, label: 'Create', admin: true },
     { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot', admin: true },
     { to: '/admin/election/view', icon: <FiEye />, label: 'View', admin: true },
     { to: '/admin/voters/approval', icon: <FiShield />, label: 'Voters', admin: true },
   ];
-  
+
   const handleAuth = () => {
     if (isAdmin) {
       logout();
-      navigate('/elections/public');
+      navigate('/login', { replace: true });
     } else {
       navigate('/login');
     }
   };
-  
+
   return (
     <Nav>
       <NavContent>
@@ -141,9 +141,9 @@ const Navbar = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/elections/public')}
         >
-          SecureVote Admin
+          Votum Admin
         </Logo>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <NavLinks>
             {navItems.map((item) => {
@@ -169,7 +169,7 @@ const Navbar = () => {
               );
             })}
           </NavLinks>
-          
+
           <AuthButton onClick={handleAuth}>
             {isAdmin ? (
               <>
