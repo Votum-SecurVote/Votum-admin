@@ -37,9 +37,7 @@ jobs:
         run: docker push ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
 
       # ----------------------------------
-      # 5️⃣ Deploy to EC2
-      # Host: 4000 → Container: 5000
-      # Always restart container
+      # 5️⃣ Deploy to EC2 (Reverse Proxy Architecture)
       # ----------------------------------
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -48,17 +46,24 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          debug: true
           script: |
+            cd ~/votum
+
+            # Create Docker network if not exists
+            docker network create votum-network || true
+
+            # Pull latest image
             docker pull ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
 
+            # Stop and remove old container
             docker stop votum-admin || true
             docker rm votum-admin || true
 
+            # Run WITHOUT exposing any public port
             docker run -d \
               --name votum-admin \
               --restart always \
-              -p 4000:5000 \
+              --network votum-network \
               ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
 
       # ----------------------------------
