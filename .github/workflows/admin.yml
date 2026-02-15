@@ -10,13 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    defaults:
-      run:
-        working-directory: Votum-admin/admin
-
     steps:
       # -------------------------
-      # Checkout Code
+      # Checkout Repository
       # -------------------------
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,6 +27,7 @@ jobs:
       # Build Docker Image
       # -------------------------
       - name: Build Docker Image
+        working-directory: admin
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest .
 
       # -------------------------
@@ -40,8 +37,7 @@ jobs:
         run: docker push ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
 
       # -------------------------
-      # Deploy to EC2
-      # Host 4000 → Container 5000
+      # Deploy to EC2 (Host 4000 → Container 5000)
       # -------------------------
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -74,13 +70,13 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "🚨 Admin Frontend Deployment Failed"
           body: |
-            Admin Frontend deployment has FAILED.
+            Admin Frontend deployment FAILED.
 
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
-            Triggered By: ${{ github.actor }}
+            Actor: ${{ github.actor }}
 
-            Check GitHub Actions immediately.
+            Please check GitHub Actions logs.
           to: ${{ secrets.EMAIL_TO }}
           from: Votum CI/CD
