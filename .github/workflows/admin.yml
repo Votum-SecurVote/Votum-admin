@@ -1,0 +1,42 @@
+name: Admin Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Votum-admin/admin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest .
+
+      - name: Push Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
+            docker stop votum-admin || true
+            docker rm votum-admin || true
+            docker run -d \
+              --name votum-admin \
+              -p 4000:5000 \
+              ${{ secrets.DOCKER_USERNAME }}/votum-admin:latest
