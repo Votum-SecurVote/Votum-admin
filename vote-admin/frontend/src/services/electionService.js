@@ -1,112 +1,61 @@
-import api from "./api";
+import axios from 'axios';
 
-const electionService = {
+const API_BASE_URL = 'http://localhost:5000/api';
 
-  /* ================================
-        ELECTION
-     ================================ */
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
-  // ✅ GET all elections
-  getAdminElections: async () => {
-    const response = await api.get("/admin/elections");
-    return response.data;
+// Request interceptor for adding auth token (JWT-based RBAC)
+api.interceptors.request.use(
+  (config) => {
+    const stored = localStorage.getItem('auth');
+    if (stored) {
+      try {
+        const { token } = JSON.parse(stored);
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return config;
   },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-  // ✅ CREATE election
-  createElection: async (payload) => {
-    const response = await api.post("/admin/elections", payload);
-    return response.data;
-  },
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message = error.response?.data?.error || error.message;
+    return Promise.reject(new Error(message));
+  }
+);
 
-  // ✅ PUBLISH election
-  publishElection: async (electionId) => {
-    const response = await api.put(
-      `/admin/elections/${electionId}/publish`
-    );
-    return response.data;
-  },
-
-  // ✅ UNPUBLISH election
-  unpublishElection: async (electionId) => {
-    const response = await api.put(
-      `/admin/elections/${electionId}/unpublish`
-    );
-    return response.data;
-  },
-
-  // ✅ DELETE election
-  deleteElection: async (electionId) => {
-    const response = await api.delete(
-      `/admin/elections/${electionId}`
-    );
-    return response.data;
-  },
-
-  /* ================================
-        BALLOT
-     ================================ */
-
-  // ✅ GET ballots of one election
-  getElectionBallots: async (electionId) => {
-    const response = await api.get(
-      `/admin/elections/${electionId}/ballots`
-    );
-    return response.data;
-  },
-
-  // ✅ CREATE ballot
-  createBallot: async (electionId, payload) => {
-    const response = await api.post(
-      `/admin/elections/${electionId}/ballots`,
-      payload
-    );
-    return response.data;
-  },
-
-  // ✅ PUBLISH ballot
-  publishBallot: async (ballotId) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/publish`
-    );
-    return response.data;
-  },
-
-  // ✅ UNPUBLISH ballot
-  unpublishBallot: async (ballotId) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/unpublish`
-    );
-    return response.data;
-  },
-
-  // ✅ ROLLBACK ballot
-  rollbackBallot: async (ballotId, version) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/rollback/${version}`
-    );
-    return response.data;
-  },
-
-  /* ================================
-        CANDIDATE
-     ================================ */
-
-  // ✅ CREATE candidate
-  createCandidate: async (ballotId, payload) => {
-    const response = await api.post(
-      `/admin/ballots/${ballotId}/candidates`,
-      payload
-    );
-    return response.data;
-  },
-
-  // ✅ GET ballot candidates
-  getBallotCandidates: async (ballotId) => {
-    const response = await api.get(
-      `/admin/ballots/${ballotId}/candidates`
-    );
-    return response.data;
-  },
+export const electionService = {
+  // Election APIs
+  createElection: (data) => api.post('/elections', data),
+  getElection: (id) => api.get(`/elections/${id}`),
+  getActiveElections: () => api.get('/elections/active'),
+  getAdminElections: () => api.get('/elections/admin'),
+  publishElection: (id) => api.post(`/elections/${id}/publish`),
+  unpublishElection: (id) => api.post(`/elections/${id}/unpublish`),
+  deleteElection: (id) => api.delete(`/elections/${id}`),
+  
+  // Ballot APIs (versioned by election)
+  createBallot: (electionId, data) => api.post(`/elections/${electionId}/ballots`, data),
+  getElectionBallots: (electionId) => api.get(`/elections/${electionId}/ballots`),
+  publishBallot: (ballotId) => api.post(`/ballots/${ballotId}/publish`),
+  unpublishBallot: (ballotId) => api.post(`/ballots/${ballotId}/unpublish`),
+  rollbackBallot: (ballotId, targetVersion) =>
+    api.post(`/ballots/${ballotId}/rollback`, { targetVersion }),
 };
 
 export default electionService;

@@ -2,8 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
-// Simple centered spinner + message used while pages
-// are waiting for mock services (elections, ballots, etc.).
 const LoaderContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;

@@ -1,8 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
-// Small route guard used in App.jsx
-// Only lets users with a stored ADMIN token access /admin/*
 const AdminRoute = () => {
   const stored = localStorage.getItem('auth');
 
