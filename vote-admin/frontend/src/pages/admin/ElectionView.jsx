@@ -1,871 +1,368 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiCalendar, FiClock, FiUsers, FiCheckCircle, FiXCircle, 
-  FiEye, FiEdit, FiTrash2, FiRefreshCw, FiUpload, FiDownload,
-  FiActivity, FiTrendingUp, FiAlertCircle
+import {
+  FiCalendar, FiClock, FiTrash2, FiUpload,
+  FiDownload, FiLayers, FiCheckCircle, FiCircle, FiBox, FiShield, FiExternalLink
 } from 'react-icons/fi';
 import electionService from '../../services/electionService';
 import Loader from '../../components/Loader';
 
-/* =====================
-   UTC → IST display
-===================== */
+/* --- Formal Helpers --- */
 const formatIST = (utc) => {
   if (!utc) return '—';
   return new Date(utc).toLocaleString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    hour12: true,
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
   });
 };
 
-const getProgress = (startDate, endDate) => {
-  if (!startDate || !endDate) return 0;
-  const now = Date.now();
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  if (now <= start) return 0;
-  if (now >= end) return 100;
-  return Math.round(((now - start) / (end - start)) * 100);
-};
-
-/* =====================
-   STYLES
-===================== */
+/* --- Styled Components (Gov Registry Aesthetic) --- */
 const Page = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 5rem 2rem 2rem;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #f1f5f9;
+  font-family: 'Public Sans', 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
 `;
 
 const Container = styled.div`
-  max-width: 1400px;
+  max-width: 1600px;
+  width: 100%;
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  min-height: 0;
 `;
 
-const Header = styled.div`
-  text-align: center;
-  margin-bottom: 3rem;
-  color: white;
+const Header = styled.header`
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
 
   h1 {
-    font-size: 3rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  }
-
-  p {
-    font-size: 1.2rem;
-    opacity: 0.9;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 0;
   }
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
+const StatBar = styled.div`
+  display: flex;
+  gap: 0.75rem;
 `;
 
-const Card = styled(motion.div)`
+const StatBadge = styled.div`
   background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-  }
-`;
-
-const ElectionCard = styled(Card)`
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 25px 70px rgba(0,0,0,0.4);
-  }
-
-  ${props => props.$selected && `
-    border: 3px solid #667eea;
-    transform: scale(1.02);
-  `}
-`;
-
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-
-  &.draft { 
-    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-    color: #374151;
-  }
-  &.published { 
-    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
-    color: #1e40af;
-  }
-  &.active { 
-    background: linear-gradient(135deg, #bbf7d0, #86efac);
-    color: #15803d;
-    animation: pulse 2s infinite;
-  }
-  &.ended { 
-    background: linear-gradient(135deg, #fecaca, #fca5a5);
-    color: #991b1b;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin: 0.8rem 0;
-  font-size: 0.95rem;
-  color: #4b5563;
-
-  svg {
-    color: #667eea;
-    flex-shrink: 0;
-  }
-`;
-
-const ProgressBar = styled.div`
-  margin-top: 1.5rem;
-  
-  .label {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.85rem;
-    color: #6b7280;
-    font-weight: 600;
-  }
-
-  .bar {
-    height: 12px;
-    background: #e5e7eb;
-    border-radius: 999px;
-    overflow: hidden;
-    position: relative;
-
-    .fill {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      border-radius: 999px;
-      transition: width 1s ease;
-      position: relative;
-      overflow: hidden;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        animation: shimmer 2s infinite;
-      }
-    }
-  }
-
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 0.8rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-`;
-
-const Button = styled.button`
+  border: 1px solid #cbd5e1;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.7rem 1.2rem;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  color: ${props => props.$color || '#475569'};
+  text-transform: uppercase;
 
-  &.primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    }
-  }
-
-  &.success {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-    }
-  }
-
-  &.danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-    }
-  }
-
-  &.secondary {
-    background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
-
-    &:hover {
-      background: #667eea;
-      color: white;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-  }
+  span { font-size: 1rem; color: #0f172a; }
 `;
 
-const BallotHistory = styled.div`
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid #e5e7eb;
+const DashboardGrid = styled.div`
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+`;
+
+/* --- Sidebar: Election Registry --- */
+const Sidebar = styled.div`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-top: 4px solid #1e40af;
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; }
+`;
+
+const ElectionCard = styled.div`
+  padding: 1.25rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  background: ${props => props.$active ? '#eff6ff' : 'white'};
+  border-left: 4px solid ${props => props.$active ? '#1e40af' : 'transparent'};
+  transition: all 0.2s;
+
+  &:hover { background: #f8fafc; }
 
   h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 1.5rem;
-    color: #1f2937;
-    font-size: 1.3rem;
-
-    svg {
-      color: #667eea;
-    }
-  }
-`;
-
-const BallotVersion = styled(motion.div)`
-  background: ${props => props.$isPublished ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)' : '#f9fafb'};
-  border: 2px solid ${props => props.$isPublished ? '#10b981' : '#e5e7eb'};
-  border-radius: 12px;
-  padding: 1.2rem;
-  margin-bottom: 1rem;
-  position: relative;
-
-  .version-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.8rem;
-
-    .version-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-
-      .version-number {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1f2937;
-      }
-
-      .published-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.3rem 0.8rem;
-        background: #10b981;
-        color: white;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-      }
-    }
-
-    .version-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-  }
-
-  .ballot-details {
-    color: #6b7280;
+    margin: 0 0 0.5rem 0;
     font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .candidates-list {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e5e7eb;
-
-    .candidate-item {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.6rem;
-      background: white;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-
-      .candidate-name {
-        font-weight: 600;
-        color: #1f2937;
-      }
-
-      .candidate-party {
-        color: #667eea;
-        font-size: 0.85rem;
-      }
-    }
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1e293b;
   }
 `;
 
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 3rem;
-  color: #9ca3af;
-
-  svg {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-
-  p {
-    font-size: 1.1rem;
-  }
+const StatusChip = styled.span`
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  font-weight: 800;
+  background: ${props => props.$status === 'PUBLISHED' ? '#166534' : '#64748b'};
+  color: white;
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+/* --- Detail View: Formal Record --- */
+const DetailPanel = styled(motion.div)`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; }
+`;
+
+const RecordHeader = styled.div`
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 2rem;
   margin-bottom: 2rem;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  h2 { font-size: 1.75rem; margin: 0; color: #0f172a; text-transform: uppercase; letter-spacing: -0.01em; }
+  .ledger-id { color: #94a3b8; font-family: monospace; font-size: 0.8rem; margin-top: 0.5rem; font-weight: 600; }
 `;
 
-const StatCard = styled(Card)`
-  text-align: center;
+const MetaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
   padding: 1.5rem;
-
-  .stat-icon {
-    font-size: 2.5rem;
-    color: #667eea;
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-value {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #1f2937;
-    margin-bottom: 0.3rem;
-  }
-
-  .stat-label {
-    font-size: 0.9rem;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 `;
 
-/* =====================
-   COMPONENT
-===================== */
+const MetaItem = styled.div`
+  small { color: #64748b; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; }
+  div { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid #f1f5f9;
+`;
+
+const PrimaryButton = styled.button`
+  background: ${props => props.$variant === 'danger' ? '#b91c1c' : '#1e40af'};
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 2px;
+
+  &:hover { opacity: 0.9; }
+  &:disabled { background: #cbd5e1; cursor: not-allowed; }
+`;
+
+/* --- Component --- */
 const ElectionView = () => {
   const [elections, setElections] = useState([]);
   const [selected, setSelected] = useState(null);
   const [ballots, setBallots] = useState([]);
-  const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  useEffect(() => { loadElections(); }, []);
+  useEffect(() => { if (selected) loadBallots(selected.id); }, [selected]);
 
   const loadElections = async () => {
     try {
       const res = await electionService.getAdminElections();
-      setElections(res.data || []);
-      if (res.data && res.data.length > 0) {
-        setSelected(res.data[0]);
-      }
-    } catch (err) {
-      console.error('Failed to load elections:', err);
-    } finally {
-      setLoading(false);
-    }
+      setElections(res || []);
+      if (res?.length > 0 && !selected) setSelected(res[0]);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  const loadBallots = async (electionId) => {
-    if (!electionId) return;
+  const loadBallots = async (id) => {
     try {
-      const res = await electionService.getElectionBallots(electionId);
-      setBallots(res.data || []);
-    } catch (err) {
-      console.error('Failed to load ballots:', err);
-      setBallots([]);
-    }
+      const res = await electionService.getElectionBallots(id);
+      setBallots(res || []);
+    } catch { setBallots([]); }
   };
 
-  useEffect(() => {
-    loadElections();
-  }, []);
-
-  useEffect(() => {
-    if (selected) {
-      loadBallots(selected._id);
-    }
-  }, [selected]);
-
-  const statusOf = (e) => {
-    const startDate = e.startDate ?? e.start_date;
-    const endDate = e.endDate ?? e.end_date;
-    const isPublished = e.isPublished ?? e.is_published;
-    if (!isPublished) return 'draft';
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
-    const t = now.getTime();
-    if (t >= end) return 'ended';
-    if (t >= start) return 'active';
-    return 'published';
-  };
-
-  const handlePublish = async () => {
-    if (!selected) return;
+  const handleAction = async (actionFn) => {
     setActionLoading(true);
     try {
-      await electionService.publishElection(selected._id);
+      await actionFn();
       await loadElections();
-      alert('Election published successfully!');
-    } catch (err) {
-      alert('Failed to publish: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (err) { alert("Authorization Denied: Action failed."); }
+    finally { setActionLoading(false); }
   };
 
-  const handleUnpublish = async () => {
-    if (!selected) return;
-    setActionLoading(true);
-    try {
-      await electionService.unpublishElection(selected._id);
-      await loadElections();
-      alert('Election unpublished successfully!');
-    } catch (err) {
-      alert('Failed to unpublish: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selected) return;
-    if (!confirm(`Delete "${selected.title}"? This cannot be undone.`)) return;
-    setActionLoading(true);
-    try {
-      await electionService.deleteElection(selected._id);
-      await loadElections();
-      alert('Election deleted successfully!');
-    } catch (err) {
-      alert('Failed to delete: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handlePublishBallot = async (ballotId) => {
-    setActionLoading(true);
-    try {
-      await electionService.publishBallot(ballotId);
-      await loadBallots(selected._id);
-      await loadElections();
-      alert('Ballot published successfully!');
-    } catch (err) {
-      alert('Failed to publish ballot: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleUnpublishBallot = async (ballotId) => {
-    setActionLoading(true);
-    try {
-      await electionService.unpublishBallot(ballotId);
-      await loadBallots(selected._id);
-      await loadElections();
-      alert('Ballot unpublished successfully!');
-    } catch (err) {
-      alert('Failed to unpublish ballot: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRollback = async (ballotId, targetVersion) => {
-    if (!confirm(`Rollback to version ${targetVersion}? This will create a new ballot version.`)) return;
-    setActionLoading(true);
-    try {
-      await electionService.rollbackBallot(ballotId, targetVersion);
-      await loadBallots(selected._id);
-      await loadElections();
-      alert('Ballot rolled back successfully!');
-    } catch (err) {
-      alert('Failed to rollback: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  if (loading) return <Loader message="Loading elections..." />;
+  if (loading) return <Loader message="Verifying administrative credentials..." />;
 
   const stats = {
     total: elections.length,
-    active: elections.filter(e => statusOf(e) === 'active').length,
-    draft: elections.filter(e => statusOf(e) === 'draft').length,
+    published: elections.filter(e => e.status === "PUBLISHED").length,
+    draft: elections.filter(e => e.status === "DRAFT").length,
   };
 
   return (
     <Page>
       <Container>
         <Header>
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            Election Dashboard
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            Manage elections, ballots, and track voting progress in real-time
-          </motion.p>
+          <h1>Election Registry</h1>
+          <StatBar>
+            <StatBadge>Registry Size: <span>{stats.total}</span></StatBadge>
+            <StatBadge $color="#166534"><FiCheckCircle /> Live: <span>{stats.published}</span></StatBadge>
+            <StatBadge $color="#b45309"><FiCircle /> Drafts: <span>{stats.draft}</span></StatBadge>
+          </StatBar>
         </Header>
 
-        <StatsGrid>
-          <StatCard
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="stat-icon"><FiActivity /></div>
-            <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Elections</div>
-          </StatCard>
-
-          <StatCard
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="stat-icon"><FiTrendingUp /></div>
-            <div className="stat-value">{stats.active}</div>
-            <div className="stat-label">Active Now</div>
-          </StatCard>
-
-          <StatCard
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="stat-icon"><FiEdit /></div>
-            <div className="stat-value">{stats.draft}</div>
-            <div className="stat-label">In Draft</div>
-          </StatCard>
-        </StatsGrid>
-
-        <Grid>
-          {/* LEFT: Election List */}
-          <div>
-            <h2 style={{ color: 'white', marginBottom: '1.5rem', fontSize: '1.8rem' }}>
-              All Elections
-            </h2>
-            {elections.length === 0 ? (
-              <Card>
-                <EmptyState>
-                  <FiAlertCircle />
-                  <p>No elections found. Create your first election!</p>
-                </EmptyState>
-              </Card>
-            ) : (
-              <AnimatePresence>
-                {elections.map((e, idx) => (
-                  <ElectionCard
-                    key={e._id ?? e.id}
-                    $selected={selected?._id === e._id}
-                    onClick={() => setSelected(e)}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                      <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#1f2937' }}>{e.title}</h3>
-                      <Badge className={statusOf(e)}>
-                        {statusOf(e) === 'active' && <FiActivity />}
-                        {statusOf(e)}
-                      </Badge>
-                    </div>
-
-                    {e.description && (
-                      <p style={{ color: '#6b7280', fontSize: '0.95rem', marginBottom: '1rem' }}>
-                        {e.description}
-                      </p>
-                    )}
-
-                    <InfoRow>
-                      <FiCalendar />
-                      <span>Start: {formatIST(e.startDate ?? e.start_date)}</span>
-                    </InfoRow>
-
-                    <InfoRow>
-                      <FiClock />
-                      <span>End: {formatIST(e.endDate ?? e.end_date)}</span>
-                    </InfoRow>
-
-                    <InfoRow>
-                      <FiUsers />
-                      <span>{e.candidates?.length || 0} Candidates</span>
-                    </InfoRow>
-
-                    {(e.isPublished ?? e.is_published) && (
-                      <ProgressBar>
-                        <div className="label">
-                          <span>Progress</span>
-                          <span>{getProgress(e.startDate ?? e.start_date, e.endDate ?? e.end_date)}%</span>
-                        </div>
-                        <div className="bar">
-                          <div 
-                            className="fill" 
-                            style={{ width: `${getProgress(e.startDate ?? e.start_date, e.endDate ?? e.end_date)}%` }}
-                          />
-                        </div>
-                      </ProgressBar>
-                    )}
-                  </ElectionCard>
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* RIGHT: Election Details & Ballot History */}
-          <div>
-            {selected ? (
-              <Card
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
+        <DashboardGrid>
+          <Sidebar>
+            {elections.map((e) => (
+              <ElectionCard
+                key={e.id}
+                $active={selected?.id === e.id}
+                onClick={() => setSelected(e)}
               >
-                <h2 style={{ marginBottom: '1.5rem', color: '#1f2937' }}>Election Details</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3>{e.title}</h3>
+                  <StatusChip $status={e.status}>{e.status}</StatusChip>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>
+                  RECORDED: {new Date(e.startDate).toLocaleDateString('en-IN')}
+                </div>
+              </ElectionCard>
+            ))}
+          </Sidebar>
 
-                <ActionButtons>
-                  {!selected.isPublished ? (
-                    <Button className="success" onClick={handlePublish} disabled={actionLoading}>
-                      <FiUpload /> Publish Election
-                    </Button>
-                  ) : (
-                    <Button className="secondary" onClick={handleUnpublish} disabled={actionLoading}>
-                      <FiDownload /> Unpublish
-                    </Button>
-                  )}
-
-                  <Button className="danger" onClick={handleDelete} disabled={actionLoading}>
-                    <FiTrash2 /> Delete
-                  </Button>
-                </ActionButtons>
-
-                {selected.votingRules && (
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f0f9ff', borderRadius: '10px', borderLeft: '4px solid #667eea' }}>
-                    <strong style={{ color: '#1e40af' }}>Voting Rules:</strong>
-                    <p style={{ margin: '0.5rem 0 0 0', color: '#374151' }}>{selected.votingRules}</p>
+          <AnimatePresence mode="wait">
+            {selected ? (
+              <DetailPanel
+                key={selected.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <RecordHeader>
+                  <div className="top">
+                    <div>
+                      <h2>{selected.title}</h2>
+                      <div className="ledger-id">REGISTRY_UID: {selected.id.toUpperCase()}</div>
+                    </div>
+                    <FiShield size={32} color="#1e40af" />
                   </div>
-                )}
+                  <p style={{ color: '#475569', fontSize: '0.95rem', marginTop: '1.5rem', lineHeight: '1.6' }}>
+                    {selected.description || "Official preamble not provided for this record."}
+                  </p>
+                </RecordHeader>
 
-                {selected.candidates && selected.candidates.length > 0 && (
-                  <div style={{ marginTop: '1.5rem' }}>
-                    <h4 style={{ color: '#1f2937', marginBottom: '1rem' }}>
-                      <FiUsers style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
-                      Candidates ({selected.candidates.length})
-                    </h4>
-                    {selected.candidates.map((c, idx) => (
-                      <div key={idx} style={{ 
-                        padding: '0.8rem', 
-                        background: '#f9fafb', 
-                        borderRadius: '8px', 
-                        marginBottom: '0.5rem',
-                        borderLeft: '3px solid #667eea'
-                      }}>
-                        <div style={{ fontWeight: 600, color: '#1f2937' }}>{c.name}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#667eea' }}>{c.party}</div>
-                        {c.description && (
-                          <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.3rem' }}>
-                            {c.description}
-                          </div>
-                        )}
+                <MetaGrid>
+                  <MetaItem>
+                    <small><FiCalendar /> Commencement</small>
+                    <div>{formatIST(selected.startDate)}</div>
+                  </MetaItem>
+                  <MetaItem>
+                    <small><FiClock /> Conclusion</small>
+                    <div>{formatIST(selected.endDate)}</div>
+                  </MetaItem>
+                  <MetaItem>
+                    <small><FiLayers /> Active Ballots</small>
+                    <div>{ballots.length} Sub-modules Configured</div>
+                  </MetaItem>
+                </MetaGrid>
+
+                <h4 style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: '#64748b', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                  Attached Ballot Specifications
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {ballots.map(b => (
+                    <div key={b.id} style={{ border: '1px solid #e2e8f0', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderRadius: '2px' }}>
+                      <FiBox color="#94a3b8" />
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>{b.title}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>STATUS: {b.status}</div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
 
-                <BallotHistory>
-                  <h3>
-                    <FiRefreshCw />
-                    Ballot History ({ballots.length} versions)
-                  </h3>
-
-                  {ballots.length === 0 ? (
-                    <EmptyState>
-                      <FiAlertCircle />
-                      <p>No ballots created yet for this election.</p>
-                    </EmptyState>
+                <ActionRow>
+                  {selected.status !== "PUBLISHED" ? (
+                    <PrimaryButton
+                      disabled={actionLoading}
+                      onClick={() => handleAction(() => electionService.publishElection(selected.id))}
+                    >
+                      <FiUpload /> Finalize & Publish to Ledger
+                    </PrimaryButton>
                   ) : (
-                    <AnimatePresence>
-                      {ballots.map((ballot, idx) => (
-                        <BallotVersion
-                          key={ballot.id}
-                          $isPublished={ballot.isPublished}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                        >
-                          <div className="version-header">
-                            <div className="version-info">
-                              <div className="version-number">Version {ballot.version}</div>
-                              {ballot.isPublished && (
-                                <div className="published-badge">
-                                  <FiCheckCircle /> PUBLISHED
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="version-actions">
-                              {!ballot.isPublished ? (
-                                <Button 
-                                  className="success" 
-                                  onClick={() => handlePublishBallot(ballot.id)}
-                                  disabled={actionLoading}
-                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                >
-                                  <FiUpload /> Publish
-                                </Button>
-                              ) : (
-                                <Button 
-                                  className="secondary" 
-                                  onClick={() => handleUnpublishBallot(ballot.id)}
-                                  disabled={actionLoading}
-                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                >
-                                  <FiDownload /> Unpublish
-                                </Button>
-                              )}
-
-                              {ballot.version > 1 && (
-                                <Button 
-                                  className="primary" 
-                                  onClick={() => handleRollback(ballot.id, ballot.version - 1)}
-                                  disabled={actionLoading}
-                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                >
-                                  <FiRefreshCw /> Rollback
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="ballot-details">
-                            <strong>{ballot.title || 'Untitled Ballot'}</strong>
-                            {ballot.description && <div>{ballot.description}</div>}
-                            <div style={{ marginTop: '0.3rem', fontSize: '0.8rem', color: '#9ca3af' }}>
-                              Created: {formatIST(ballot.createdAt)}
-                            </div>
-                          </div>
-
-                          {ballot.options && ballot.options.length > 0 && (
-                            <div className="candidates-list">
-                              {ballot.options.map((opt, i) => (
-                                <div key={i} className="candidate-item">
-                                  <div>
-                                    <div className="candidate-name">{opt.name}</div>
-                                    <div className="candidate-party">{opt.party}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </BallotVersion>
-                      ))}
-                    </AnimatePresence>
+                    <PrimaryButton
+                      disabled={actionLoading}
+                      onClick={() => handleAction(() => electionService.unpublishElection(selected.id))}
+                    >
+                      <FiDownload /> Revoke Publication
+                    </PrimaryButton>
                   )}
-                </BallotHistory>
-              </Card>
+
+                  <PrimaryButton
+                    $variant="danger"
+                    disabled={actionLoading}
+                    onClick={() => {
+                      if (window.confirm("CRITICAL ACTION: Are you sure you want to purge this record?")) {
+                        handleAction(() => electionService.deleteElection(selected.id));
+                      }
+                    }}
+                  >
+                    <FiTrash2 /> Purge Record
+                  </PrimaryButton>
+
+                </ActionRow>
+              </DetailPanel>
             ) : (
-              <Card>
-                <EmptyState>
-                  <FiEye />
-                  <p>Select an election to view details</p>
-                </EmptyState>
-              </Card>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', border: '2px dashed #e2e8f0' }}>
+                Select an entry from the registry to view administrative details.
+              </div>
             )}
-          </div>
-        </Grid>
+          </AnimatePresence>
+        </DashboardGrid>
       </Container>
     </Page>
   );

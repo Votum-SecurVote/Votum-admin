@@ -2,657 +2,406 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import styled from 'styled-components';
 import {
-  FiPlus, FiTrash2, FiSave, FiUser, FiList, FiCheck,
-  FiRefreshCw, FiInfo, FiChevronDown
+  FiPlus, FiTrash2, FiSave, FiUser, FiCheck,
+  FiLayout, FiGrid, FiArrowRight, FiUploadCloud, FiShield, FiAlertCircle
 } from 'react-icons/fi';
 import electionService from '../../services/electionService';
-import AnimatedCard from '../../components/AnimatedCard';
 import Loader from '../../components/Loader';
 
-/* -------------------- Styled Components -------------------- */
+/* --- Institutional Styled Components --- */
 
-const PageContainer = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-`;
-
-const Header = styled.div`
-  margin-bottom: 2rem;
-
-  h1 {
-    font-size: 2rem;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: #64748b;
-    font-size: 1rem;
-  }
-`;
-
-const Card = styled(motion.div)`
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-`;
-
-const InfoBanner = styled.div`
+const Page = styled.div`
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* No page scroll */
+  background-color: #f1f5f9;
+  font-family: 'Public Sans', 'Inter', sans-serif;
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: ${(p) => (p.$type === 'warning' ? '#fef3c7' : '#dbeafe')};
-  border-left: 4px solid ${(p) => (p.$type === 'warning' ? '#f59e0b' : '#2563eb')};
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  color: #374151;
+  flex-direction: column;
+`;
 
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-    color: ${(p) => (p.$type === 'warning' ? '#d97706' : '#1d4ed8')};
+const Container = styled.div`
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  min-height: 0; /* Important for flex child scrolling */
+`;
+
+const ProgressTracker = styled.div`
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #cbd5e1;
+  padding-bottom: 1rem;
+  flex-shrink: 0;
+`;
+
+const Step = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: ${props => props.$active ? '#1e40af' : (props.$completed ? '#1e40af' : '#64748b')};
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  .num {
+    width: 24px;
+    height: 24px;
+    background: ${props => props.$active || props.$completed ? '#1e40af' : '#cbd5e1'};
+    color: white;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+  }
+`;
+
+const MainGrid = styled.div`
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+`;
+
+/* --- SIDEBAR: Registry List --- */
+const Sidebar = styled.div`
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  border-top: 4px solid #1e40af;
+  display: flex;
+  flex-direction: column;
+  height: 90%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+`;
+
+const SidebarHeader = styled.div`
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  label {
+    font-size: 0.7rem; font-weight: 800; color: #475569; 
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: block;
   }
 `;
 
 const Select = styled.select`
-  width: 100%;
-  max-width: 400px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 4px;
+  font-size: 0.9rem; background: white; font-weight: 600;
+  &:focus { outline: none; border-color: #1e40af; }
+`;
+
+const BallotList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+`;
+
+const BallotItem = styled.div`
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid ${props => props.$active ? '#1e40af' : '#f1f5f9'};
+  background: ${props => props.$active ? '#eff6ff' : 'white'};
+  transition: all 0.2s;
+
+  h4 { margin: 0; font-size: 0.9rem; color: #1e293b; text-transform: uppercase; }
+  span { font-size: 0.75rem; color: #64748b; font-weight: 600; }
+`;
+
+const CreateBallotBox = styled.div`
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+
+  input {
+    width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 4px; margin-bottom: 1rem;
+    box-sizing: border-box;
+    &:focus { outline: none; border-color: #1e40af; }
+  }
+`;
+
+/* --- MAIN WORKSPACE --- */
+const Workspace = styled.div`
   background: white;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 20px;
-  padding-right: 44px;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-  }
-`;
-
-const Controls = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const Button = styled(motion.button)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &.primary {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-  }
-
-  &.primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
-  }
-
-  &.success {
-    background: linear-gradient(135deg, #16a34a, #15803d);
-    color: white;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
-  }
-
-  &.success:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
-  }
-
-  &.secondary {
-    background: #f1f5f9;
-    color: #475569;
-    border: 2px solid #e2e8f0;
-  }
-
-  &.secondary:hover:not(:disabled) {
-    background: #e2e8f0;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-  }
-`;
-
-const VersionBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.9rem;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #3730a3;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-`;
-
-const CandidateList = styled(Reorder.Group)`
-  list-style: none;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  height: 90%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0;
-  margin: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 `;
 
-const CandidateItem = styled(Reorder.Item)`
-  list-style: none;
-`;
+const WorkspaceHeader = styled.div`
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f1f5f9;
+  display: flex; justify-content: space-between; align-items: center;
 
-const CandidateCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-  padding: 1rem 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: #cbd5e1;
+  h2 { margin: 0; font-size: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; }
+  .status-tag { 
+    background: #fef3c7; color: #92400e; padding: 0.4rem 0.8rem; border-radius: 4px; 
+    font-size: 0.7rem; font-weight: 800; border: 1px solid #fde68a;
   }
 `;
 
-const AddCandidateForm = styled.div`
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
+const WorkspaceContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.5rem;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 3rem;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; }
+`;
+
+const FieldLabel = styled.label`
+  display: block; font-size: 0.8rem; font-weight: 700; color: #334155; 
+  margin-bottom: 0.5rem; text-transform: uppercase;
 `;
 
 const Input = styled.input`
-  padding: 0.65rem 0.9rem;
-  width: 100%;
-  margin-bottom: 0.6rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-  }
+  width: 100%; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 4px;
+  margin-bottom: 1.5rem; font-size: 1rem; box-sizing: border-box;
+  &:focus { outline: none; border-color: #1e40af; }
 `;
 
-const TextArea = styled.textarea`
-  padding: 0.65rem 0.9rem;
-  width: 100%;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  min-height: 60px;
-
-  &:focus {
-    outline: none;
-    border-color: #2563eb;
-  }
+const PrimaryButton = styled.button`
+  background: #1e40af; color: white; border: none; padding: 1rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 4px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%; transition: background 0.2s;
+  &:disabled { background: #94a3b8; }
 `;
 
-const SuccessMessage = styled(motion.div)`
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
-
-  h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+/* Candidate Row Layout */
+const CandidateRow = styled(Reorder.Item)`
+  background: white; border: 2px solid #f1f5f9; border-radius: 4px;
+  padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;
+  
+  .avatar {
+    width: 50px; height: 50px; border-radius: 4px; background: #f8fafc;
+    border: 1px solid #e2e8f0; overflow: hidden;
+    img { width: 100%; height: 100%; object-fit: cover; }
   }
-
-  p {
-    margin: 0;
-    opacity: 0.95;
-    font-size: 0.95rem;
-  }
-
-  .version-saved {
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin-top: 0.5rem;
-  }
-
-  .create-another {
-    margin-top: 1rem;
-  }
+  .info { flex: 1; h4 { margin: 0; color: #1e293b; font-size: 1rem; } p { margin: 0; font-size: 0.8rem; color: #64748b; font-weight: 600; } }
 `;
 
-const ExistingVersions = styled.div`
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-
-  h4 {
-    margin: 0 0 0.75rem 0;
-    font-size: 0.95rem;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .version-chip {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    background: #f1f5f9;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
-    color: #475569;
-  }
-
-  .version-chip.published {
-    background: #dcfce7;
-    color: #166534;
-    font-weight: 600;
-  }
-`;
-
-/* -------------------- Component -------------------- */
-
+/* --- Component --- */
 const BallotDesigner = () => {
   const [elections, setElections] = useState([]);
-  const [electionId, setElectionId] = useState(() => localStorage.getItem('lastElectionId') || '');
-  const [selectedElection, setSelectedElection] = useState(null);
+  const [electionId, setElectionId] = useState('');
   const [ballots, setBallots] = useState([]);
-  const [nextVersion, setNextVersion] = useState(1);
-
+  const [activeBallot, setActiveBallot] = useState(null);
+  const [newBallotTitle, setNewBallotTitle] = useState('');
   const [candidates, setCandidates] = useState([]);
-  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', description: '' });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null); // { version, ballotId }
-  const [loadError, setLoadError] = useState('');
+  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', image: null });
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
-  /* Load admin elections */
   useEffect(() => {
-    let cancelled = false;
     const load = async () => {
       try {
-        const res = await electionService.getAdminElections();
-        if (!cancelled && res.data?.length) {
-          setElections(res.data);
-          const id = electionId || res.data[0]._id;
-          setElectionId(id);
-          localStorage.setItem('lastElectionId', id);
-        }
-      } catch (e) {
-        if (!cancelled) setLoadError(e.message || 'Failed to load elections');
-      }
+        const data = await electionService.getAdminElections();
+        setElections(data || []);
+        if (data?.length) setElectionId(data[0].id);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
     load();
-    return () => { cancelled = true; };
   }, []);
 
-  /* When electionId changes, load election details and ballots */
   useEffect(() => {
-    if (!electionId) {
-      setSelectedElection(null);
-      setBallots([]);
-      setNextVersion(1);
-      return;
-    }
-    let cancelled = false;
-    const load = async () => {
+    if (!electionId) { setBallots([]); setActiveBallot(null); return; }
+    const loadBallots = async () => {
       try {
-        const [electionRes, ballotsRes] = await Promise.all([
-          electionService.getAdminElections(),
-          electionService.getElectionBallots(electionId),
-        ]);
-        if (cancelled) return;
-        const list = electionRes.data || [];
-        const el = list.find((e) => (e._id || e.id) === electionId);
-        setSelectedElection(el || null);
-        const ballotList = ballotsRes.data || [];
-        setBallots(ballotList);
-        const maxV = ballotList.length
-          ? Math.max(...ballotList.map((b) => b.version || 0))
-          : 0;
-        setNextVersion(maxV + 1);
-      } catch (e) {
-        if (!cancelled) {
-          setSelectedElection(null);
-          setBallots([]);
-          setNextVersion(1);
-        }
-      }
+        const data = await electionService.getElectionBallots(electionId);
+        setBallots(data || []);
+        setActiveBallot(null);
+      } catch (e) { console.error(e); }
     };
-    load();
-    return () => { cancelled = true; };
+    loadBallots();
   }, [electionId]);
 
-  /* Redirect if no elections at all */
   useEffect(() => {
-    if (!loadError && elections.length === 0 && !electionId) {
-      const t = setTimeout(() => {
-        alert('No election selected. Please create an election first.');
-        window.location.href = '/admin/election/create';
-      }, 500);
-      return () => clearTimeout(t);
-    }
-  }, [elections.length, electionId, loadError]);
+    if (!activeBallot) { setCandidates([]); return; }
+    const loadCandidates = async () => {
+      try {
+        const data = await electionService.getBallotCandidates(activeBallot.id);
+        setCandidates(data || []);
+      } catch (err) { console.error(err); }
+    };
+    loadCandidates();
+  }, [activeBallot]);
 
-  const isDraft = selectedElection
-    ? (selectedElection.isPublished ?? selectedElection.is_published) === false
-    : true;
-
-  const hasDuplicateCandidate = (list) => {
-    const seen = new Set();
-    for (const c of list) {
-      const name = (c.name || '').trim().toLowerCase();
-      const party = (c.party || '').trim().toLowerCase();
-      if (!name || !party) {
-        return 'Candidate name and party are required for every candidate';
-      }
-      const key = `${name}::${party}`;
-      if (seen.has(key)) {
-        return 'Duplicate candidate with the same name and party is not allowed (case-insensitive)';
-      }
-      seen.add(key);
-    }
-    return null;
-  };
-
-  const addCandidate = () => {
-    const name = newCandidate.name?.trim();
-    const party = newCandidate.party?.trim();
-
-    if (!name || !party) {
-      alert('Candidate name and party are required');
-      return;
-    }
-
-    const candidateToAdd = { ...newCandidate, name, party, id: Date.now().toString() };
-    const nextList = [...candidates, candidateToAdd];
-    const duplicateError = hasDuplicateCandidate(nextList);
-    if (duplicateError) {
-      alert(duplicateError);
-      return;
-    }
-
-    setCandidates(nextList);
-    setNewCandidate({ name: '', party: '', description: '' });
-  };
-
-  const removeCandidate = (id) => {
-    setCandidates(candidates.filter((c) => c.id !== id));
-  };
-
-  const saveBallot = async () => {
-    if (candidates.length < 2) {
-      alert('At least 2 candidates are required');
-      return;
-    }
-
-    const duplicateError = hasDuplicateCandidate(candidates);
-    if (duplicateError) {
-      alert(duplicateError);
-      return;
-    }
-    if (!electionId) {
-      alert('Please select an election');
-      return;
-    }
-    if (!isDraft) {
-      alert('Cannot create new ballot versions when the election is published. Unpublish the election first (from the View dashboard).');
-      return;
-    }
-    setLoading(true);
-    setSuccess(null);
+  const handleCreateBallot = async () => {
+    if (!newBallotTitle.trim()) return;
+    setProcessing(true);
     try {
-      const res = await electionService.createBallot(electionId, {
-        title: `Ballot v${nextVersion}`,
-        options: candidates.map((c) => ({
-          name: c.name?.trim(),
-          party: c.party?.trim(),
-          description: c.description,
-        })),
-        maxSelections: 1,
+      const ballot = await electionService.createBallot(electionId, {
+        title: newBallotTitle, description: "Official Ballot", maxSelections: 1
       });
-      const data = res.data ?? res;
-      const id = data?.id;
-      const version = data?.version ?? nextVersion;
-      setSuccess({ version, ballotId: id });
-      setBallots((prev) => [...prev, { id, version, ...data }]);
-      setNextVersion(version + 1);
-      setCandidates([]);
-    } catch (err) {
-      alert(err.message || 'Failed to save ballot');
-    } finally {
-      setLoading(false);
-    }
+      setBallots([...ballots, ballot]);
+      setNewBallotTitle('');
+      setActiveBallot(ballot);
+    } catch (e) { alert("Registration Error"); }
+    finally { setProcessing(false); }
   };
 
-  const createAnotherVersion = () => {
-    setSuccess(null);
-  };
-
-  const publishElection = async () => {
-    if (!electionId) return;
+  const handleAddCandidate = async () => {
+    if (!newCandidate.name || !newCandidate.party) return;
+    setProcessing(true);
     try {
-      await electionService.publishElection(electionId);
-      alert('Election published successfully');
-      const res = await electionService.getAdminElections();
-      const list = res.data || [];
-      const el = list.find((e) => (e._id || e.id) === electionId);
-      setSelectedElection(el || null);
-    } catch (err) {
-      alert(err.message);
-    }
+      const createdCandidate = await electionService.createCandidate(activeBallot.id, {
+        name: newCandidate.name, party: newCandidate.party, symbol: newCandidate.image?.src || null
+      });
+      setCandidates(prev => [...prev, createdCandidate]);
+      setNewCandidate({ name: '', party: '', image: null });
+    } catch (e) { alert("Candidate Entry Failed"); }
+    finally { setProcessing(false); }
   };
 
-  if (loadError && elections.length === 0) {
-    return (
-      <PageContainer>
-        <Header>
-          <h1>Ballot Designer</h1>
-          <p>Create and manage ballot versions</p>
-        </Header>
-        <InfoBanner $type="warning">
-          <FiInfo />
-          <span>{loadError}</span>
-        </InfoBanner>
-        <Button className="secondary" onClick={() => window.location.href = '/admin/election/create'}>
-          Create an election first
-        </Button>
-      </PageContainer>
-    );
-  }
-
-  if (loading) {
-    return <Loader message="Saving ballot..." />;
-  }
+  if (loading) return <Loader message="Accessing secure workspace..." />;
 
   return (
-    <PageContainer>
-      <Header>
-        <h1>Ballot Designer</h1>
-        <p>Create and manage ballot versions for an election</p>
-      </Header>
+    <Page>
+      <Container>
+        <ProgressTracker>
+          <Step $completed><div className="num">1</div> General Configuration</Step>
+          <Step $active><div className="num">2</div> Ballot Specification</Step>
+          <Step><div className="num">3</div> Voter Authorization</Step>
+        </ProgressTracker>
 
-      <Card>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
-          Select election
-        </label>
-        <Select
-          value={electionId}
-          onChange={(e) => {
-            setElectionId(e.target.value);
-            localStorage.setItem('lastElectionId', e.target.value);
-          }}
-        >
-          <option value="">-- Choose election --</option>
-          {elections.map((e) => (
-            <option key={e._id ?? e.id} value={e._id ?? e.id}>
-              {e.title} {e.isPublished || e.is_published ? '(Published)' : '(Draft)'}
-            </option>
-          ))}
-        </Select>
+        <MainGrid>
+          <Sidebar>
+            <SidebarHeader>
+              <label>Select Election Record</label>
+              <Select value={electionId} onChange={e => setElectionId(e.target.value)}>
+                {elections.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+              </Select>
+            </SidebarHeader>
 
-        {selectedElection && (
-          <ExistingVersions>
-            <h4>
-              <FiList /> Existing ballot versions: {ballots.length}
-              {ballots.length > 0 && ` (next will be Version ${nextVersion})`}
-            </h4>
-            {ballots.map((b) => (
-              <span
-                key={b.id}
-                className={`version-chip ${b.isPublished ? 'published' : ''}`}
-                title={b.isPublished ? 'Currently published' : 'Draft'}
-              >
-                v{b.version} {b.isPublished ? '✓ Published' : ''}
-              </span>
-            ))}
-          </ExistingVersions>
-        )}
-      </Card>
-
-      {!isDraft && (
-        <InfoBanner $type="warning">
-          <FiInfo />
-          <span>
-            <strong>Election is published.</strong> New ballot versions can only be created when the election is in <strong>Draft</strong>. Unpublish the election from the <strong>View</strong> dashboard if you need to add more versions.
-          </span>
-        </InfoBanner>
-      )}
-
-      <AnimatePresence>
-        {success && (
-          <SuccessMessage
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <h3>
-              <FiCheck size={24} /> Ballot saved
-            </h3>
-            <p className="version-saved">Version {success.version} created successfully.</p>
-            <p>You can publish or rollback this version from the View dashboard.</p>
-            <div className="create-another">
-              <Button className="secondary" onClick={createAnotherVersion}>
-                <FiRefreshCw /> Create another version
-              </Button>
+            <div style={{ padding: '1.25rem 1.5rem 0.5rem', fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Ballot Registry
             </div>
-          </SuccessMessage>
-        )}
-      </AnimatePresence>
 
-      <Card>
-        <Controls>
-          <Button className="primary" onClick={addCandidate}>
-            <FiPlus /> Add candidate
-          </Button>
-          <Button
-            className="success"
-            onClick={saveBallot}
-            disabled={candidates.length < 2 || !isDraft}
-          >
-            <FiSave /> Save as new version (Version {nextVersion})
-          </Button>
-          {selectedElection && (
-            <Button
-              className="secondary"
-              onClick={publishElection}
-              disabled={candidates.length < 2 || !isDraft}
-            >
-              <FiCheck /> Publish election
-            </Button>
-          )}
-        </Controls>
-
-        <AddCandidateForm>
-          <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#334155' }}>New candidate</h3>
-          <Input
-            placeholder="Name"
-            value={newCandidate.name}
-            onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
-          />
-          <Input
-            placeholder="Party"
-            value={newCandidate.party}
-            onChange={(e) => setNewCandidate({ ...newCandidate, party: e.target.value })}
-          />
-          <TextArea
-            placeholder="Description (optional)"
-            value={newCandidate.description}
-            onChange={(e) => setNewCandidate({ ...newCandidate, description: e.target.value })}
-          />
-          <Button className="secondary" onClick={addCandidate} style={{ marginTop: '0.5rem' }}>
-            <FiPlus /> Add to list
-          </Button>
-        </AddCandidateForm>
-
-        {candidates.length === 0 ? (
-          <AnimatedCard>
-            <p style={{ color: '#64748b', margin: 0 }}>No candidates added yet. Add at least 2 to save a new version.</p>
-          </AnimatedCard>
-        ) : (
-          <>
-            <p style={{ marginBottom: '0.75rem', fontWeight: 600, color: '#475569' }}>
-              Candidates in this version ({candidates.length})
-            </p>
-            <CandidateList axis="y" values={candidates} onReorder={setCandidates}>
-              {candidates.map((c) => (
-                <CandidateItem key={c.id} value={c}>
-                  <CandidateCard>
-                    <div>
-                      <strong>{c.name}</strong>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{c.party}</div>
-                      {c.description && (
-                        <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                          {c.description}
-                        </div>
-                      )}
-                    </div>
-                    <Button className="secondary" onClick={() => removeCandidate(c.id)}>
-                      <FiTrash2 />
-                    </Button>
-                  </CandidateCard>
-                </CandidateItem>
+            <BallotList>
+              {ballots.map(b => (
+                <BallotItem key={b.id} $active={activeBallot?.id === b.id} onClick={() => setActiveBallot(b)}>
+                  <h4>{b.title}</h4>
+                  <span>{(b.options || []).length} Registered Candidates</span>
+                </BallotItem>
               ))}
-            </CandidateList>
-          </>
-        )}
-      </Card>
-    </PageContainer>
+            </BallotList>
+
+            <CreateBallotBox>
+              <input
+                placeholder="Enter Ballot Designation"
+                value={newBallotTitle}
+                onChange={e => setNewBallotTitle(e.target.value)}
+              />
+              <PrimaryButton onClick={handleCreateBallot} disabled={processing || !electionId}>
+                <FiPlus /> Initialize New Ballot
+              </PrimaryButton>
+            </CreateBallotBox>
+          </Sidebar>
+
+          <Workspace>
+            {activeBallot ? (
+              <>
+                <WorkspaceHeader>
+                  <h2><FiShield /> {activeBallot.title}</h2>
+                  <span className="status-tag">UNOFFICIAL DRAFT - PENDING REGISTRATION</span>
+                </WorkspaceHeader>
+
+                <WorkspaceContent>
+                  <div>
+                    <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1rem', color: '#1e293b' }}>Candidate Registration</h3>
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                      <FieldLabel>Full Legal Name</FieldLabel>
+                      <Input
+                        placeholder="John Doe"
+                        value={newCandidate.name}
+                        onChange={e => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                      />
+
+                      <FieldLabel>Political Affiliation</FieldLabel>
+                      <Input
+                        placeholder="Party or Independent"
+                        value={newCandidate.party}
+                        onChange={e => setNewCandidate({ ...newCandidate, party: e.target.value })}
+                      />
+
+                      <FieldLabel>Official Symbol / Portrait</FieldLabel>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '2px dashed #cbd5e1', cursor: 'pointer', background: 'white', marginBottom: '1.5rem' }}>
+                        {newCandidate.image ? <img src={newCandidate.image.src} style={{ width: 40, height: 40 }} alt="" /> : <FiUploadCloud color="#1e40af" />}
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{newCandidate.image ? 'Replace Image' : 'Select Official File'}</span>
+                        <input type="file" hidden onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) setNewCandidate({ ...newCandidate, image: { src: URL.createObjectURL(file) } });
+                        }} />
+                      </label>
+
+                      <PrimaryButton onClick={handleAddCandidate} disabled={processing}>
+                        <FiCheck /> Register to Ballot
+                      </PrimaryButton>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                      <h3 style={{ margin: 0, fontSize: '1rem' }}>Registered Candidates ({candidates.length})</h3>
+                      <button style={{ background: 'white', border: '2px solid #1e40af', color: '#1e40af', padding: '0.5rem 1rem', borderRadius: '4px', fontWeight: 800, cursor: 'pointer', fontSize: '0.75rem' }}>
+                        <FiSave /> SAVE BALLOT ORDER
+                      </button>
+                    </div>
+
+                    <Reorder.Group axis="y" values={candidates} onReorder={setCandidates} style={{ listStyle: 'none', padding: 0 }}>
+                      <AnimatePresence>
+                        {candidates.map(c => (
+                          <CandidateRow key={c.id} value={c}>
+                            <FiGrid style={{ color: '#cbd5e1', cursor: 'grab' }} />
+                            <div className="avatar">
+                              {c.symbol ? <img src={c.symbol} alt="" /> : <FiUser size={24} color="#cbd5e1" style={{ margin: 12 }} />}
+                            </div>
+                            <div className="info">
+                              <h4>{c.name}</h4>
+                              <p>{c.party}</p>
+                            </div>
+                            <button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => setCandidates(candidates.filter(item => item.id !== c.id))}>
+                              <FiTrash2 size={18} />
+                            </button>
+                          </CandidateRow>
+                        ))}
+                      </AnimatePresence>
+                    </Reorder.Group>
+                  </div>
+                </WorkspaceContent>
+              </>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                <FiLayout size={64} style={{ marginBottom: '1.5rem', opacity: 0.2 }} />
+                <h3 style={{ margin: 0 }}>No Ballot Selected</h3>
+                <p style={{ fontSize: '0.9rem' }}>Initialize or select a ballot record from the registry to manage candidate specifications.</p>
+              </div>
+            )}
+          </Workspace>
+        </MainGrid>
+      </Container>
+    </Page>
   );
 };
 
