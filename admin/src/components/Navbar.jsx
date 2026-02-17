@@ -1,116 +1,108 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { FiPlus, FiEdit, FiEye, FiShield, FiLogIn, FiLogOut } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiShield, FiLogIn, FiLogOut, FiLock } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Fixed top nav bar shared by admin + public views
 const Nav = styled.nav`
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
   background: #ffffff;
-  backdrop-filter: none;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 3px solid var(--brand-navy, #1e293b);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   z-index: 1000;
-  padding: 0 2rem;
 `;
 
 const NavContent = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  height: 100%;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 2rem;
 `;
 
-const Logo = styled(motion.div)`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--brand-navy);
+const LogoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
+`;
+
+const LogoMain = styled.div`
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+`;
+
+const LogoSub = styled.span`
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
 `;
 
 const NavLinks = styled.div`
   display: flex;
-  gap: 1rem;
+  height: 100%;
 `;
 
 const NavLink = styled(Link)`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  gap: 0.6rem;
+  padding: 0 1.25rem;
+  height: 72px;
+  color: #475569;
   text-decoration: none;
-  transition: all var(--transition-normal);
-  position: relative;
-  pointer-events: ${(props) => (props.$disabled ? 'none' : 'auto')};
-  opacity: ${(props) => (props.$disabled ? 0.5 : 1)};
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-bottom: 4px solid transparent;
+  transition: all 0.2s ease-in-out;
   
   &:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: #f8fafc;
+    color: #0f172a;
   }
   
   &.active {
-    color: var(--primary);
-    background: rgba(37, 99, 235, 0.08);
-    
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 1rem;
-      right: 1rem;
-      height: 2px;
-      background: var(--primary);
-      border-radius: 1px;
-    }
+    color: #1e40af; /* Formal Blue */
+    background: #eff6ff;
+    border-bottom: 4px solid #1e40af;
+    font-weight: 700;
   }
-`;
 
-const Tooltip = styled.div`
-  position: absolute;
-  bottom: -2.25rem;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  background: #0f172a;
-  color: white;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  box-shadow: var(--shadow-sm);
+  ${props => props.$disabled && `
+    color: #cbd5e1;
+    cursor: not-allowed;
+    &:hover { background: transparent; }
+  `}
 `;
 
 const AuthButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  background: var(--primary);
-  color: white;
-  border: none;
+  padding: 0.6rem 1.25rem;
+  border: 2px solid #1e293b;
+  background: ${props => props.$isAdmin ? 'transparent' : '#1e293b'};
+  color: ${props => props.$isAdmin ? '#1e293b' : 'white'};
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all var(--transition-normal);
-  
+  transition: 0.2s;
+
   &:hover {
-    background: var(--primary-hover);
-    transform: translateY(-1px);
+    background: ${props => props.$isAdmin ? '#f1f5f9' : '#0f172a'};
   }
 `;
 
-// Navbar – shows brand, "Create / Ballot / View" tabs
-// and Login / Logout button based on admin auth status.
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -118,10 +110,10 @@ const Navbar = () => {
   const isAdmin = user?.role === 'ADMIN';
 
   const navItems = [
-    { to: '/admin/election/create', icon: <FiPlus />, label: 'Create', admin: true },
-    { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot', admin: true },
-    { to: '/admin/election/view', icon: <FiEye />, label: 'View', admin: true },
-    { to: '/admin/voters/approval', icon: <FiShield />, label: 'Voters', admin: true },
+    { to: '/admin/election/create', icon: <FiPlus />, label: 'Create Election' },
+    { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot Management' },
+    { to: '/admin/election/view', icon: <FiEye />, label: 'Audit / View' },
+    { to: '/admin/voters/approval', icon: <FiShield />, label: 'Voter Registry' },
   ];
 
   const handleAuth = () => {
@@ -134,58 +126,51 @@ const Navbar = () => {
   };
 
   return (
-    <Nav>
-      <NavContent>
-        <Logo
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/elections/public')}
-        >
-          Votum Admin
-        </Logo>
+    <>
+      <Nav>
+        <NavContent>
+          <LogoContainer onClick={() => navigate('/elections/public')}>
+            <LogoMain>VOTUM</LogoMain>
+            <LogoSub>Admin</LogoSub>
+          </LogoContainer>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <NavLinks>
-            {navItems.map((item) => {
-              const disabled = item.admin && !isAdmin;
-              const active = location.pathname === item.to;
-              return (
-                <div key={item.to} style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', height: '100%' }}>
+            <NavLinks>
+              {navItems.map((item) => {
+                const disabled = !isAdmin;
+                const active = location.pathname === item.to;
+                return (
                   <NavLink
-                    to={item.to}
+                    key={item.to}
+                    to={disabled ? '#' : item.to}
                     className={active ? 'active' : ''}
                     $disabled={disabled}
-                    title={disabled ? 'You do not have permission to perform this action' : undefined}
+                    aria-disabled={disabled}
                   >
-                    {item.icon}
+                    {disabled ? <FiLock size={14} /> : item.icon}
                     <span>{item.label}</span>
                   </NavLink>
-                  {disabled && (
-                    <Tooltip>
-                      You do not have permission to perform this action
-                    </Tooltip>
-                  )}
-                </div>
-              );
-            })}
-          </NavLinks>
+                );
+              })}
+            </NavLinks>
 
-          <AuthButton onClick={handleAuth}>
-            {isAdmin ? (
-              <>
-                <FiLogOut />
-                <span>Logout</span>
-              </>
-            ) : (
-              <>
-                <FiLogIn />
-                <span>Sign In</span>
-              </>
-            )}
-          </AuthButton>
-        </div>
-      </NavContent>
-    </Nav>
+            <AuthButton $isAdmin={isAdmin} onClick={handleAuth}>
+              {isAdmin ? (
+                <>
+                  <FiLogOut />
+                  <span>Logout</span>
+                </>
+              ) : (
+                <>
+                  <FiLogIn />
+                  <span>Secure Sign In</span>
+                </>
+              )}
+            </AuthButton>
+          </div>
+        </NavContent>
+      </Nav>
+    </>
   );
 };
 

@@ -13,8 +13,7 @@ const PageTransition = ({ children }) => {
       }}
       style={{
         width: '100%',
-        minHeight: 'calc(100vh - 64px)',
-        paddingTop: '64px'
+        minHeight: '100vh',
       }}
     >
       {children}

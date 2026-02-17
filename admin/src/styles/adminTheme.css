@@ -1,45 +1,52 @@
 :root {
   /* Brand & Surface Colors (global palette for all admin pages) */
   --brand-navy: #0b2b5c;
-  --primary: #0050a4;        /* main action / primary buttons */
-  --primary-hover: #003a7c;  /* darker hover / focus */
+  --primary: #0050a4;
+  /* main action / primary buttons */
+  --primary-hover: #003a7c;
+  /* darker hover / focus */
 
-  --bg-page: #f5f7fb;        /* main app background */
+  --bg-page: #f5f7fb;
+  /* main app background */
   --bg-primary: var(--bg-page);
-  --bg-secondary: #edf1f9;   /* section / sidebar */
-  --bg-card: #ffffff;        /* cards, tables, forms */
-  --bg-hover: #e4ebf7;       /* row / button hover */
-  --field-bg: #f9fafb;       /* input backgrounds */
+  --bg-secondary: #edf1f9;
+  /* section / sidebar */
+  --bg-card: #ffffff;
+  /* cards, tables, forms */
+  --bg-hover: #e4ebf7;
+  /* row / button hover */
+  --field-bg: #f9fafb;
+  /* input backgrounds */
   --field-border: #cbd5e1;
-  
+
   /* Semantic Colors */
   --success: #147a3f;
   --warning: #c98a1a;
   --danger: #c62828;
   --info: #1a4b82;
-  
+
   /* Text Colors */
   --text-primary: #111827;
   --text-secondary: #1f2933;
   --text-muted: #6b7280;
-  
+
   /* Border & Shadows (kept subtle for official look) */
   --border-color: #d0d7e2;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 8px 16px rgba(15, 23, 42, 0.08);
   --shadow-glow: 0 0 0 3px rgba(0, 80, 164, 0.25);
-  
+
   /* Glassmorphism (used sparingly) */
   --glass-bg: rgba(255, 255, 255, 0.96);
   --glass-border: rgba(208, 215, 226, 0.9);
   --glass-shadow: var(--shadow-lg);
-  
+
   /* Spacing */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
@@ -50,6 +57,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* overflow: hidden; */
 }
 
 body {
@@ -58,10 +66,6 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-.app {
-  padding-top: 64px; /* account for fixed navbar */
 }
 
 /* Glassmorphism Effects */
