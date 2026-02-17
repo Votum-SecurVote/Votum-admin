@@ -13,6 +13,8 @@ const Page = styled.div`
   justify-content: center;
   padding: 2rem;
   background: var(--bg-page);
+  position: fixed;
+  inset: 0;
 `;
 
 const Card = styled.div`
@@ -101,7 +103,7 @@ const ErrorBox = styled.div`
 // Login component – handles username/password form
 // and on success stores ADMIN auth + redirects to Step 3.
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -114,21 +116,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const data = await loginAdmin(username, password);
-      console.log('Login response:', data);
-      
-      // Update auth context
-      login({ token: data.token, role: data.role });
-      
-      // Redirect to admin dashboard
+      const token = await loginAdmin(email, password);
+
+      console.log("Received token:", token);
+
+      login({ token, role: "ADMIN" });
+
       navigate('/admin/election/view');
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      console.error("Login error:", err);
+      setError("Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <Page>
@@ -138,12 +140,13 @@ const Login = () => {
           {error && <ErrorBox>{error}</ErrorBox>}
 
           <Field>
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              placeholder="Enter your admin username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="Enter your admin email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </Field>
