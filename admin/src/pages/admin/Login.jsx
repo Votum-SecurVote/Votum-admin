@@ -1,107 +1,158 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { FiLock, FiShield, FiAlertTriangle, FiUser, FiKey } from 'react-icons/fi';
 import { loginAdmin } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 
-// Standalone admin login page – uses the mock auth service
-// so you can demo the UI without a real backend.
 const Page = styled.div`
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* Fixed Viewport */
+  display: flex;
+  flex-direction: column;
+  background-color: #f1f5f9;
+  font-family: 'Public Sans', 'Inter', sans-serif;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: var(--bg-page);
-  position: fixed;
-  inset: 0;
 `;
 
-const Card = styled.div`
+const LoginCard = styled.div`
   width: 100%;
-  max-width: 420px;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-top: 6px solid #1e40af; /* Institutional Navy accent */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
 `;
 
-const Title = styled.h2`
-  font-size: 1.5rem;
+const Branding = styled.div`
+  text-align: center;
+  margin-bottom: 2.5rem;
+  
+  .agency-name {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+`;
+
+const WarningBox = styled.div`
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 0.75rem;
+  
+  svg { color: #9a3412; flex-shrink: 0; margin-top: 2px; }
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #9a3412;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+`;
+
+const FormGroup = styled.div`
   margin-bottom: 1.5rem;
-  color: var(--text-secondary);
+  
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #334155;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.025em;
+  }
 `;
 
-const Form = styled.form`
+const InputWrapper = styled.div`
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
+  align-items: center;
 
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-`;
-
-const Label = styled.label`
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  svg {
+    position: absolute;
+    left: 1rem;
+    color: #94a3b8;
+  }
 `;
 
 const Input = styled.input`
-  padding: 0.75rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  background: #ffffff;
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 2px;
+  font-size: 1rem;
+  color: #0f172a;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: var(--shadow-glow);
+    border-color: #1e40af;
+    background: #f8fafc;
   }
 `;
 
-const PrimaryButton = styled.button`
-  padding: 0.8rem 1rem;
-  border-radius: 999px;
+const AuthButton = styled.button`
+  width: 100%;
+  padding: 1rem;
+  background: #1e40af;
+  color: white;
   border: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  background: var(--primary);
-  color: #ffffff;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: background 0.2s;
 
-  &:hover:not(:disabled) {
-    background: var(--primary-hover);
-    box-shadow: var(--shadow-md);
-  }
-
-  &:disabled {
-    background: var(--bg-secondary);
-    color: var(--text-muted);
-    cursor: not-allowed;
-    box-shadow: none;
-  }
+  &:hover:not(:disabled) { background: #1e3a8a; }
+  &:disabled { background: #94a3b8; cursor: not-allowed; }
 `;
 
-const ErrorBox = styled.div`
-  padding: 0.75rem 0.9rem;
-  border-radius: 8px;
+const ErrorBanner = styled.div`
+  padding: 0.75rem 1rem;
   background: #fef2f2;
-  border: 1px solid rgba(198, 40, 40, 0.3);
-  color: var(--danger);
-  font-size: 0.85rem;
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
-// Login component – handles username/password form
-// and on success stores ADMIN auth + redirects to Step 3.
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -117,57 +168,82 @@ const Login = () => {
 
     try {
       const token = await loginAdmin(email, password);
-
-      console.log("Received token:", token);
-
       login({ token, role: "ADMIN" });
-
       navigate('/admin/election/view');
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Invalid email or password");
+      setError("AUTHENTICATION FAILED: Invalid credentials provided.");
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <Page>
-      <Card>
-        <Title>Admin Login</Title>
-        <Form onSubmit={submit}>
-          {error && <ErrorBox>{error}</ErrorBox>}
+      <MainContent>
+        <LoginCard>
+          <Branding>
+            <div className="agency-name">Admin</div>
+            <h2>VOTUM</h2>
+          </Branding>
 
-          <Field>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your admin email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </Field>
+          <WarningBox>
+            <FiAlertTriangle size={18} />
+            <p>
+              This is a restricted-access system. By logging in, you acknowledge
+              that all activities are logged and subject to audit under
+              regional cybersecurity laws.
+            </p>
+          </WarningBox>
 
-          <Field>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </Field>
+          <form onSubmit={submit}>
+            {error && (
+              <ErrorBanner>
+                <FiLock size={14} /> {error}
+              </ErrorBanner>
+            )}
 
-          <PrimaryButton type="submit" disabled={loading}>
-            {loading ? 'Logging in…' : 'Login'}
-          </PrimaryButton>
-        </Form>
-      </Card>
+            <FormGroup>
+              <label htmlFor="email">Administrative ID (Email)</label>
+              <InputWrapper>
+                <FiUser size={18} />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@votum.in"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </InputWrapper>
+            </FormGroup>
+
+            <FormGroup>
+              <label htmlFor="password">Password</label>
+              <InputWrapper>
+                <FiKey size={18} />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </InputWrapper>
+            </FormGroup>
+
+            <AuthButton type="submit" disabled={loading}>
+              {loading ? (
+                'Authenticating Session...'
+              ) : (
+                <>
+                  <FiShield /> Login
+                </>
+              )}
+            </AuthButton>
+          </form>
+        </LoginCard>
+      </MainContent>
     </Page>
   );
 };
