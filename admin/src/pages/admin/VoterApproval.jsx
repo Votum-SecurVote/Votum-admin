@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUser, FiMail, FiPhone, FiCalendar, FiMapPin,
-  FiCheck, FiX, FiClock
+  FiCheck, FiX
 } from 'react-icons/fi';
 import voterService from '../../services/voterService';
 import Loader from '../../components/Loader';
@@ -23,9 +23,26 @@ const Container = styled.div`
 `;
 
 const Header = styled.header`
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   h1 { font-size: 1.8rem; font-weight: 700; margin: 0; }
   p { color: #64748b; margin-top: 0.5rem; }
+`;
+
+const FilterRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const FilterButton = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  border: ${({ active }) => active ? "none" : "1px solid #cbd5e1"};
+  background: ${({ active }) => active ? "#2563eb" : "white"};
+  color: ${({ active }) => active ? "white" : "#334155"};
+  transition: 0.2s;
 `;
 
 const Grid = styled.div`
@@ -92,11 +109,23 @@ const Button = styled.button`
   }
 `;
 
+const StatusBadge = styled.span`
+  font-weight: 600;
+  color: ${({ status }) =>
+    status === "APPROVED"
+      ? "#16a34a"
+      : status === "REJECTED"
+        ? "#dc2626"
+        : "#c2410c"};
+`;
+
 /* --- Component --- */
 const VoterApproval = () => {
+
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [filter, setFilter] = useState("PENDING");
 
   useEffect(() => {
     loadVoters();
@@ -104,7 +133,7 @@ const VoterApproval = () => {
 
   const loadVoters = async () => {
     try {
-      const res = await voterService.getPendingVoters();
+      const res = await voterService.getAllVoters();
       setVoters(res.data || []);
     } catch (err) {
       console.error(err);
@@ -118,7 +147,7 @@ const VoterApproval = () => {
     try {
       await voterService.approveVoter(userId);
       await loadVoters();
-    } catch (err) {
+    } catch {
       alert("Approval failed");
     } finally {
       setActionLoading(p => ({ ...p, [userId]: false }));
@@ -130,32 +159,48 @@ const VoterApproval = () => {
     try {
       await voterService.rejectVoter(userId);
       await loadVoters();
-    } catch (err) {
+    } catch {
       alert("Rejection failed");
     } finally {
       setActionLoading(p => ({ ...p, [userId]: false }));
     }
   };
 
-  if (loading) return <Loader message="Fetching pending registrations..." />;
+  const filteredVoters = voters.filter(v => v.status === filter);
+
+  if (loading) return <Loader message="Fetching users..." />;
 
   return (
     <Page>
       <Container>
+
         <Header>
-          <h1>Voter Verification</h1>
-          <p>Approve or reject pending users.</p>
+          <h1>Voter Management</h1>
+          <p>Filter and manage voter approvals.</p>
         </Header>
 
-        {voters.length === 0 ? (
+        {/* FILTER BUTTONS */}
+        <FilterRow>
+          {["PENDING", "APPROVED", "REJECTED"].map(status => (
+            <FilterButton
+              key={status}
+              active={filter === status}
+              onClick={() => setFilter(status)}
+            >
+              {status} ({voters.filter(v => v.status === status).length})
+            </FilterButton>
+          ))}
+        </FilterRow>
+
+        {filteredVoters.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
             <FiCheck size={48} />
-            <p>All caught up! No pending registrations.</p>
+            <p>No users in this category.</p>
           </div>
         ) : (
           <Grid>
             <AnimatePresence>
-              {voters.map((v) => (
+              {filteredVoters.map((v) => (
                 <Card key={v.userId}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -168,9 +213,9 @@ const VoterApproval = () => {
                         ID: {v.userId?.slice(0, 8)}
                       </small>
                     </div>
-                    <span style={{ color: "#c2410c" }}>
-                      <FiClock /> Pending
-                    </span>
+                    <StatusBadge status={v.status}>
+                      {v.status}
+                    </StatusBadge>
                   </CardHeader>
 
                   <CardBody>
@@ -196,29 +241,32 @@ const VoterApproval = () => {
                     </InfoItem>
                   </CardBody>
 
-                  <CardFooter>
-                    <Button
-                      className="reject"
-                      onClick={() => handleReject(v.userId)}
-                      disabled={actionLoading[v.userId]}
-                    >
-                      <FiX /> Reject
-                    </Button>
+                  {v.status === "PENDING" && (
+                    <CardFooter>
+                      <Button
+                        className="reject"
+                        onClick={() => handleReject(v.userId)}
+                        disabled={actionLoading[v.userId]}
+                      >
+                        <FiX /> Reject
+                      </Button>
 
-                    <Button
-                      className="approve"
-                      onClick={() => handleApprove(v.userId)}
-                      disabled={actionLoading[v.userId]}
-                    >
-                      <FiCheck /> Approve
-                    </Button>
-                  </CardFooter>
+                      <Button
+                        className="approve"
+                        onClick={() => handleApprove(v.userId)}
+                        disabled={actionLoading[v.userId]}
+                      >
+                        <FiCheck /> Approve
+                      </Button>
+                    </CardFooter>
+                  )}
 
                 </Card>
               ))}
             </AnimatePresence>
           </Grid>
         )}
+
       </Container>
     </Page>
   );

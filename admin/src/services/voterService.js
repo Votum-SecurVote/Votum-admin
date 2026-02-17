@@ -12,8 +12,13 @@ const rejectVoter = (userId) => {
   return api.put(`/admin/reject/${userId}`);
 };
 
+const getAllVoters = () => {
+  return api.get("/admin/users");
+};
+
 export default {
   getPendingVoters,
   approveVoter,
   rejectVoter,
+  getAllVoters,
 };
