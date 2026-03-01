@@ -11,6 +11,7 @@ import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import PageTransition from './components/PageTransition';
 
+import Dashboard from './pages/admin/Dashboard';
 import ElectionCreate from './pages/admin/ElectionCreate';
 import BallotDesigner from './pages/admin/BallotDesigner';
 import ElectionView from './pages/admin/ElectionView';
@@ -52,6 +53,15 @@ const AppContent = () => {
           />
 
           <Route path="/admin" element={<AdminRoute />}>
+            <Route
+              path="dashboard"
+              element={
+                <PageTransition>
+                  <Dashboard />
+                </PageTransition>
+              }
+            />
+
             <Route
               path="election/create"
               element={
