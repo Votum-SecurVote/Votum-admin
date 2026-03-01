@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiActivity, FiUsers, FiFileText, FiCheckCircle, FiClock } from 'react-icons/fi';
+import api from '../../services/api';
+import Loader from '../../components/Loader';
 
 const Page = styled.div`
   height: 100vh;
@@ -122,9 +124,10 @@ const ActivityItem = styled.li`
   }
 
   .time {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #64748b;
-    min-width: 100px;
+    min-width: 120px;
+    font-weight: 600;
   }
 
   .details {
@@ -135,92 +138,105 @@ const ActivityItem = styled.li`
       font-size: 0.95rem;
     }
     span {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: #64748b;
+      text-transform: uppercase;
     }
   }
 `;
 
 const Dashboard = () => {
-    return (
-        <Page>
-            <Container>
-                <Header>
-                    <h1>Admin Dashboard</h1>
-                    <p>Overview of election metrics and administrative activity.</p>
-                </Header>
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-                <KPIContainer>
-                    <KPICard>
-                        <div className="icon-wrapper" style={{ background: '#dbeafe', color: '#1d4ed8' }}>
-                            <FiFileText />
-                        </div>
-                        <div className="content">
-                            <h3>Total Elections</h3>
-                            <p>12</p>
-                        </div>
-                    </KPICard>
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await api.get('/admin/metrics');
+        setMetrics(res.data);
+      } catch (error) {
+        console.error("Failed to load metrics", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-                    <KPICard>
-                        <div className="icon-wrapper" style={{ background: '#dcfce7', color: '#15803d' }}>
-                            <FiActivity />
-                        </div>
-                        <div className="content">
-                            <h3>Active Elections</h3>
-                            <p>3</p>
-                        </div>
-                    </KPICard>
+    fetchMetrics();
+  }, []);
 
-                    <KPICard>
-                        <div className="icon-wrapper" style={{ background: '#fef3c7', color: '#b45309' }}>
-                            <FiUsers />
-                        </div>
-                        <div className="content">
-                            <h3>Pending Candidates</h3>
-                            <p>28</p>
-                        </div>
-                    </KPICard>
+  if (loading) return <Loader message="Loading dashboard metrics..." />;
 
-                    <KPICard>
-                        <div className="icon-wrapper" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
-                            <FiCheckCircle />
-                        </div>
-                        <div className="content">
-                            <h3>Approved Candidates</h3>
-                            <p>145</p>
-                        </div>
-                    </KPICard>
-                </KPIContainer>
+  return (
+    <Page>
+      <Container>
+        <Header>
+          <h1>Admin Dashboard</h1>
+          <p>Overview of election metrics and administrative activity.</p>
+        </Header>
 
-                <Section>
-                    <h2><FiClock /> Recent Activity</h2>
-                    <ActivityList>
-                        <ActivityItem>
-                            <div className="time">10 mins ago</div>
-                            <div className="details">
-                                <p>New candidate registration submitted for General Assembly</p>
-                                <span>Candidate: Jane Doe</span>
-                            </div>
-                        </ActivityItem>
-                        <ActivityItem>
-                            <div className="time">1 hour ago</div>
-                            <div className="details">
-                                <p>Election "Tech Board 2026" status changed to Active</p>
-                                <span>Action by: Admin</span>
-                            </div>
-                        </ActivityItem>
-                        <ActivityItem>
-                            <div className="time">3 hours ago</div>
-                            <div className="details">
-                                <p>Bulk approved 15 candidates for Engineering Student Council</p>
-                                <span>Action by: Admin</span>
-                            </div>
-                        </ActivityItem>
-                    </ActivityList>
-                </Section>
-            </Container>
-        </Page>
-    );
+        <KPIContainer>
+          <KPICard>
+            <div className="icon-wrapper" style={{ background: '#dbeafe', color: '#1d4ed8' }}>
+              <FiFileText />
+            </div>
+            <div className="content">
+              <h3>Total Elections</h3>
+              <p>{metrics?.totalElections || 0}</p>
+            </div>
+          </KPICard>
+
+          <KPICard>
+            <div className="icon-wrapper" style={{ background: '#dcfce7', color: '#15803d' }}>
+              <FiActivity />
+            </div>
+            <div className="content">
+              <h3>Active Elections</h3>
+              <p>{metrics?.activeElections || 0}</p>
+            </div>
+          </KPICard>
+
+          <KPICard>
+            <div className="icon-wrapper" style={{ background: '#fef3c7', color: '#b45309' }}>
+              <FiUsers />
+            </div>
+            <div className="content">
+              <h3>Pending Candidates</h3>
+              <p>{metrics?.pendingCandidates || 0}</p>
+            </div>
+          </KPICard>
+
+          <KPICard>
+            <div className="icon-wrapper" style={{ background: '#f3e8ff', color: '#7e22ce' }}>
+              <FiCheckCircle />
+            </div>
+            <div className="content">
+              <h3>Approved Candidates</h3>
+              <p>{metrics?.approvedCandidates || 0}</p>
+            </div>
+          </KPICard>
+        </KPIContainer>
+
+        <Section>
+          <h2><FiClock /> Recent Activity (Audit Log)</h2>
+          <ActivityList>
+            {(metrics?.recentActivity || []).length > 0 ? (
+              metrics.recentActivity.map((activity) => (
+                <ActivityItem key={activity.id}>
+                  <div className="time">{new Date(activity.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+                  <div className="details">
+                    <p>{activity.action}</p>
+                    <span>Action by: {activity.user}</span>
+                  </div>
+                </ActivityItem>
+              ))
+            ) : (
+              <div style={{ color: '#94a3b8', fontStyle: 'italic', padding: '1rem 0' }}>No recent activity to display.</div>
+            )}
+          </ActivityList>
+        </Section>
+      </Container>
+    </Page>
+  );
 };
 
 export default Dashboard;
