@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
   FiUser, FiFileText, FiCheck, FiX, FiShield,
-  FiExternalLink, FiAlertCircle, FiSearch, FiFilter
+  FiExternalLink, FiAlertCircle, FiSearch, FiFilter, FiCheckCircle
 } from 'react-icons/fi';
 import voterService from '../../services/voterService';
 import Loader from '../../components/Loader';
