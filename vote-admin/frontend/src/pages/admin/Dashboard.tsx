@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi';
-import dashboardService, { DashboardStats, ActivityItem } from '../../services/dashboardService';
+import dashboardService, { DashboardStats } from '../../services/dashboardService';
 import Loader from '../../components/Loader';
 import AnimatedCard from '../../components/AnimatedCard';
 
@@ -96,7 +96,7 @@ const ActivityList = styled.div`
   gap: 0.75rem;
 `;
 
-const ActivityItem = styled.div`
+const StyledActivityItem = styled.div`
   padding: 1rem;
   background: var(--bg-secondary);
   border-radius: var(--radius-sm);
@@ -214,7 +214,7 @@ const Dashboard: React.FC = () => {
             </p>
           ) : (
             stats.recentActivity.map((activity) => (
-              <ActivityItem key={activity.id}>
+              <StyledActivityItem key={activity.id}>
                 <ActivityInfo>
                   <h4>{activity.description}</h4>
                   <p>{activity.action} • {activity.user || 'System'}</p>
@@ -222,7 +222,7 @@ const Dashboard: React.FC = () => {
                 <ActivityTime>
                   {new Date(activity.timestamp).toLocaleString()}
                 </ActivityTime>
-              </ActivityItem>
+              </StyledActivityItem>
             ))
           )}
         </ActivityList>

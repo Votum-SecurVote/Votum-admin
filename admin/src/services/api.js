@@ -7,12 +7,12 @@ const getDummyData = (config) => {
     if (url.includes("/login")) {
         return { token: "mock-token-123", user: { id: 1, email: "admin@example.com" } };
     }
-    if (url.includes("/elections")) {
-        if (method === 'get') return [{ id: 1, name: "Sample Election", status: "DRAFT" }];
-        if (method === 'post') return { id: Date.now(), status: "DRAFT", ...(config.data ? JSON.parse(config.data) : {}) };
-    }
-    if (url.includes("/users")) {
-        return []; // VoterApproval will use its internal mock data if we return an empty array, or we can just return array to prevent crash.
+    if (url.includes("/users") || url.includes("/pending-users")) {
+        return [
+            { userId: "UID-99283712", fullName: "Rajesh Kumar Sharma", photoUrl: "https://randomuser.me/api/portraits/men/75.jpg", status: "PENDING", email: "rajesh.k@example.com", phone: "+91 98765 43210", dob: "1985-04-12", gender: "Male", address: "Block-C, Sector 45, Noida, UP", election: "ELEC-2026", submissionDate: "2026-02-15" },
+            { userId: "UID-11293847", fullName: "Priya Desai", photoUrl: null, status: "PENDING", email: "priya.d@example.com", phone: "+91 87654 32109", dob: "1992-08-22", gender: "Female", address: "Flat 402, Palm Heights, Mumbai, MH", election: "ELEC-2026", submissionDate: "2026-02-28" },
+            { userId: "UID-55421980", fullName: "Anil Verma", photoUrl: "https://randomuser.me/api/portraits/men/32.jpg", status: "PENDING", email: "anil.v@example.com", phone: "+91 76543 21098", dob: "1978-11-05", gender: "Male", address: "Villa 3, Rosewood, Pune, MH", election: "ELEC-TECH", submissionDate: "2026-03-01" },
+        ];
     }
     if (url.includes("/ballots")) {
         if (method === 'get') return [];
