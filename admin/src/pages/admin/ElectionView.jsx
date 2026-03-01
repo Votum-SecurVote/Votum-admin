@@ -268,7 +268,7 @@ const ElectionView = () => {
                   <StatusChip $status={e.status}>{e.status}</StatusChip>
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>
-                  RECORDED: {new Date(e.startDate).toLocaleDateString('en-IN')}
+                  RECORDED: {e.startDate ? new Date(e.startDate).toLocaleDateString('en-IN') : 'N/A'}
                 </div>
               </ElectionCard>
             ))}
@@ -286,7 +286,7 @@ const ElectionView = () => {
                   <div className="top">
                     <div>
                       <h2>{selected.title}</h2>
-                      <div className="ledger-id">REGISTRY_UID: {selected.id.toUpperCase()}</div>
+                      <div className="ledger-id">REGISTRY_UID: {(selected.id || '').toString().toUpperCase()}</div>
                     </div>
                     <FiShield size={32} color="#1e40af" />
                   </div>
@@ -298,15 +298,15 @@ const ElectionView = () => {
                 <MetaGrid>
                   <MetaItem>
                     <small><FiCalendar /> Commencement</small>
-                    <div>{formatIST(selected.startDate)}</div>
+                    <div>{selected.startDate ? formatIST(selected.startDate) : 'Not Scheduled'}</div>
                   </MetaItem>
                   <MetaItem>
                     <small><FiClock /> Conclusion</small>
-                    <div>{formatIST(selected.endDate)}</div>
+                    <div>{selected.endDate ? formatIST(selected.endDate) : 'Not Scheduled'}</div>
                   </MetaItem>
                   <MetaItem>
                     <small><FiLayers /> Active Ballots</small>
-                    <div>{ballots.length} Sub-modules Configured</div>
+                    <div>{(ballots || []).length} Sub-modules Configured</div>
                   </MetaItem>
                 </MetaGrid>
 
@@ -314,12 +314,12 @@ const ElectionView = () => {
                   Attached Ballot Specifications
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {ballots.map(b => (
+                  {(ballots || []).map(b => (
                     <div key={b.id} style={{ border: '1px solid #e2e8f0', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderRadius: '2px' }}>
                       <FiBox color="#94a3b8" />
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>{b.title}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>STATUS: {b.status}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>STATUS: {b.status || 'DRAFT'}</div>
                       </div>
                     </div>
                   ))}
