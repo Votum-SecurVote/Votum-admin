@@ -7,6 +7,13 @@ const getDummyData = (config) => {
     if (url.includes("/login")) {
         return { token: "mock-token-123", user: { id: 1, email: "admin@example.com" } };
     }
+    if (url.includes("/elections")) {
+        if (url.includes("/ballots")) {
+            if (method === 'get') return [{ id: 101, title: "Presidential Ballot", description: "Main ballot", options: [{ id: "c1" }] }];
+        }
+        if (method === 'get') return [{ id: 1, title: "Test Election 2026", name: "Test Election 2026", status: "DRAFT" }];
+        if (method === 'post') return { id: Date.now(), title: "New Election", status: "DRAFT", ...(config.data ? JSON.parse(config.data) : {}) };
+    }
     if (url.includes("/users") || url.includes("/pending-users")) {
         return [
             { userId: "UID-99283712", fullName: "Rajesh Kumar Sharma", photoUrl: "https://randomuser.me/api/portraits/men/75.jpg", status: "PENDING", email: "rajesh.k@example.com", phone: "+91 98765 43210", dob: "1985-04-12", gender: "Male", address: "Block-C, Sector 45, Noida, UP", election: "ELEC-2026", submissionDate: "2026-02-15" },
@@ -15,7 +22,12 @@ const getDummyData = (config) => {
         ];
     }
     if (url.includes("/ballots")) {
-        if (method === 'get') return [];
+        if (url.includes("/candidates")) {
+            if (method === 'get') return [{ id: "c1", name: "Sample Candidate", party: "Independent", symbol: null }];
+            if (method === 'post') return { id: "c" + Date.now(), ...(config.data ? JSON.parse(config.data) : {}) };
+        }
+        if (method === 'get') return [{ id: 101, title: "Presidential Ballot", description: "Main ballot", options: [{ id: "c1" }] }];
+        if (method === 'post') return { id: Date.now(), ...(config.data ? JSON.parse(config.data) : {}) };
     }
     return { success: true, message: "Mocked response" };
 };
