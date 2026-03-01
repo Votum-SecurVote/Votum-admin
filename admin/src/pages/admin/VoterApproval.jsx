@@ -266,16 +266,25 @@ const VoterApproval = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
-  const handleActionConfirm = () => {
+  const handleActionConfirm = async () => {
     const { type, ids } = confirmModal;
-
-    setCandidates(prev => prev.map(c =>
-      ids.includes(c.userId) ? { ...c, status: type === 'approve' ? 'APPROVED' : 'REJECTED' } : c
-    ));
-
-    setSelectedIds([]);
     setConfirmModal({ isOpen: false, type: null, ids: [] });
-    showToast(`Successfully ${type}d ${ids.length} candidate(s).`);
+
+    try {
+      for (const id of ids) {
+        if (type === 'approve') await voterService.approveVoter(id);
+        else await voterService.rejectVoter(id);
+      }
+
+      const res = await voterService.getAllVoters();
+      setCandidates(res.data || []);
+
+      setSelectedIds([]);
+      showToast(`Successfully ${type}d ${ids.length} candidate(s).`);
+    } catch (err) {
+      console.error(err);
+      showToast(`Failed to ${type} candidate(s).`, 'error');
+    }
   };
 
   // Filtering Logic

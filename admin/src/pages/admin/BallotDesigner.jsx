@@ -269,6 +269,7 @@ const BallotDesigner = () => {
         name: newCandidate.name, party: newCandidate.party, symbol: newCandidate.image?.src || null
       });
       setCandidates(prev => [...prev, createdCandidate]);
+      setBallots(prev => prev.map(b => b.id === activeBallot.id ? { ...b, options: [...(b.options || []), createdCandidate] } : b));
       setNewCandidate({ name: '', party: '', image: null });
     } catch (e) { alert("Candidate Entry Failed"); }
     finally { setProcessing(false); }
