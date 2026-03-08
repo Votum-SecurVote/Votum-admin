@@ -7,6 +7,7 @@ import {
 import voterService from '../../services/voterService';
 import Loader from '../../components/Loader';
 import { AnimatePresence, motion } from 'framer-motion';
+import { toSvg } from 'html-to-image';
 
 /* --- Institutional Styled Components --- */
 const Page = styled.div`
@@ -232,6 +233,26 @@ const ToastContainer = styled(motion.div)`
 const VoterApproval = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const containerRef = React.useRef(null);
+
+  const exportToSVG = async () => {
+    if (!containerRef.current) return;
+    try {
+      showToast('Generating high-quality SVG screenshot...', 'success');
+      // Adding a small delay to ensure toast is visible and rendered properly if needed
+      // but actually we don't want the toast in the screenshot! 
+      // So let's capture immediately, then show toast.
+      const dataUrl = await toSvg(containerRef.current, { backgroundColor: '#f1f5f9' });
+      const link = document.createElement('a');
+      link.download = 'bulk-approval.svg';
+      link.href = dataUrl;
+      link.click();
+      showToast('SVG downloaded successfully!', 'success');
+    } catch (err) {
+      console.error('Failed to export', err);
+      showToast('Failed to export SVG', 'error');
+    }
+  };
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("PENDING");
@@ -318,7 +339,7 @@ const VoterApproval = () => {
 
   return (
     <Page>
-      <Container>
+      <Container ref={containerRef}>
         <HeaderContainer>
           <div>
             <h1 style={{ margin: 0, textTransform: 'uppercase', fontSize: '1.5rem', letterSpacing: '-0.02em' }}>Candidate Verification & Approval</h1>
@@ -341,6 +362,15 @@ const VoterApproval = () => {
                 {s} ({candidates.filter(c => c.status === s).length})
               </button>
             ))}
+            <button
+              onClick={exportToSVG}
+              style={{
+                marginLeft: '1rem', background: '#ecfdf5', color: '#065f46', border: '2px solid #a7f3d0',
+                padding: '0.6rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px'
+              }}
+            >
+              Export Dashboard to SVG
+            </button>
           </div>
         </HeaderContainer>
 
