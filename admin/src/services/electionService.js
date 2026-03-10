@@ -6,39 +6,33 @@ const electionService = {
         ELECTION
      ================================ */
 
-  // ✅ GET all elections
+  // GET all elections
   getAdminElections: async () => {
     const response = await api.get("/admin/elections");
     return response.data;
   },
 
-  // ✅ CREATE election
+  // CREATE election
   createElection: async (payload) => {
     const response = await api.post("/admin/elections", payload);
     return response.data;
   },
 
-  // ✅ PUBLISH election
+  // PUBLISH election
   publishElection: async (electionId) => {
-    const response = await api.put(
-      `/admin/elections/${electionId}/publish`
-    );
+    const response = await api.put(`/admin/elections/${electionId}/publish`);
     return response.data;
   },
 
-  // ✅ UNPUBLISH election
+  // UNPUBLISH election
   unpublishElection: async (electionId) => {
-    const response = await api.put(
-      `/admin/elections/${electionId}/unpublish`
-    );
+    const response = await api.put(`/admin/elections/${electionId}/unpublish`);
     return response.data;
   },
 
-  // ✅ DELETE election
+  // DELETE election
   deleteElection: async (electionId) => {
-    const response = await api.delete(
-      `/admin/elections/${electionId}`
-    );
+    const response = await api.delete(`/admin/elections/${electionId}`);
     return response.data;
   },
 
@@ -46,44 +40,15 @@ const electionService = {
         BALLOT
      ================================ */
 
-  // ✅ GET ballots of one election
+  // GET ballots of one election
   getElectionBallots: async (electionId) => {
-    const response = await api.get(
-      `/admin/elections/${electionId}/ballots`
-    );
+    const response = await api.get(`/admin/elections/${electionId}/ballots`);
     return response.data;
   },
 
-  // ✅ CREATE ballot
+  // CREATE ballot
   createBallot: async (electionId, payload) => {
-    const response = await api.post(
-      `/admin/elections/${electionId}/ballots`,
-      payload
-    );
-    return response.data;
-  },
-
-  // ✅ PUBLISH ballot
-  publishBallot: async (ballotId) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/publish`
-    );
-    return response.data;
-  },
-
-  // ✅ UNPUBLISH ballot
-  unpublishBallot: async (ballotId) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/unpublish`
-    );
-    return response.data;
-  },
-
-  // ✅ ROLLBACK ballot
-  rollbackBallot: async (ballotId, version) => {
-    const response = await api.put(
-      `/admin/ballots/${ballotId}/rollback/${version}`
-    );
+    const response = await api.post(`/admin/elections/${electionId}/ballots`, payload);
     return response.data;
   },
 
@@ -91,22 +56,45 @@ const electionService = {
         CANDIDATE
      ================================ */
 
-  // ✅ CREATE candidate
-  createCandidate: async (ballotId, payload) => {
-    const response = await api.post(
-      `/admin/ballots/${ballotId}/candidates`,
-      payload
-    );
+  // GET ballot candidates
+  getBallotCandidates: async (ballotId) => {
+    const response = await api.get(`/admin/ballots/${ballotId}/candidates`);
     return response.data;
   },
 
-  // ✅ GET ballot candidates
-  getBallotCandidates: async (ballotId) => {
-    const response = await api.get(
-      `/admin/ballots/${ballotId}/candidates`
+  /**
+   * CREATE candidate — Backend requires multipart/form-data with:
+   *   - "request": JSON string of { name, party }
+   *   - "photo": optional image file
+   *   - "symbol": optional image file
+   */
+  createCandidate: async (ballotId, payload, photoFile = null, symbolFile = null) => {
+    const formData = new FormData();
+
+    // Append the JSON part as a string blob
+    formData.append(
+      "request",
+      new Blob([JSON.stringify({ name: payload.name, party: payload.party })], {
+        type: "application/json",
+      })
+    );
+
+    if (photoFile instanceof File) {
+      formData.append("photo", photoFile);
+    }
+    if (symbolFile instanceof File) {
+      formData.append("symbol", symbolFile);
+    }
+
+    const response = await api.post(
+      `/admin/ballots/${ballotId}/candidates`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     return response.data;
   },
 };
 
 export default electionService;
+
+

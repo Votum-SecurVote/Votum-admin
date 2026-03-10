@@ -1,4 +1,23 @@
 import React, { useEffect, useState } from 'react';
+
+// Backend file-server base URL — serves photos and PDFs at /api/files/{relativePath}
+const FILE_BASE_URL = '/api/files';
+
+/**
+ * Builds a full URL to serve a stored file.
+ * Handles both:
+ *   - new relative paths:  "users/photos/abc.jpg"
+ *   - old absolute paths:  "C:\storage\users\photos\abc.jpg"
+ * Both resolve to: /api/files/users/photos/abc.jpg
+ */
+const getFileUrl = (storedPath) => {
+  if (!storedPath) return null;
+  // If it looks like an absolute path, extract from 'users/' onwards
+  const normalized = storedPath.replace(/\\/g, '/');
+  const idx = normalized.indexOf('users/');
+  const relative = idx !== -1 ? normalized.substring(idx) : normalized;
+  return `${FILE_BASE_URL}/${relative}`;
+};
 import styled from 'styled-components';
 import {
   FiUser, FiFileText, FiCheck, FiX, FiShield,
@@ -269,15 +288,14 @@ const VoterApproval = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const mockData = [
-          { userId: "UID-99283712", fullName: "Rajesh Kumar Sharma", photoUrl: "/admin/portraits/rajesh.png", status: "PENDING", email: "rajesh.k@example.com", phone: "+91 98765 43210", dob: "1985-04-12", gender: "Male", address: "Block-C, Sector 45, Noida, UP", election: "ELEC-2026", submissionDate: "2026-02-15" },
-          { userId: "UID-11293847", fullName: "Priya Desai", photoUrl: "/admin/portraits/priya.png", status: "PENDING", email: "priya.d@example.com", phone: "+91 87654 32109", dob: "1992-08-22", gender: "Female", address: "Flat 402, Palm Heights, Mumbai, MH", election: "ELEC-2026", submissionDate: "2026-02-28" },
-          { userId: "UID-55421980", fullName: "Anil Verma", photoUrl: "/admin/portraits/anil.png", status: "PENDING", email: "anil.v@example.com", phone: "+91 76543 21098", dob: "1978-11-05", gender: "Male", address: "Villa 3, Rosewood, Pune, MH", election: "ELEC-TECH", submissionDate: "2026-03-01" },
-        ];
-        const res = await voterService.getAllVoters().catch(() => ({ data: mockData }));
+        const res = await voterService.getAllVoters();
+        // axios wraps response in .data; backend returns List<UserProfileResponse>
         setCandidates(res.data || []);
-      } catch (err) { console.error(err); }
-      finally { setLoading(false); }
+      } catch (err) {
+        console.error('Failed to load voters:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -439,8 +457,12 @@ const VoterApproval = () => {
                   <td>
                     <VerificationZone>
                       <LargePortrait>
-                        {v.photoUrl ? (
-                          <img src={v.photoUrl} alt="Portrait" />
+                        {v.photoPath ? (
+                          <img
+                            src={getFileUrl(v.photoPath)}
+                            alt={`Portrait of ${v.fullName}`}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
                         ) : (
                           <div className="placeholder">
                             <FiUser size={48} style={{ opacity: 0.3 }} />
@@ -450,14 +472,19 @@ const VoterApproval = () => {
                       </LargePortrait>
                       <DocSection>
                         <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Required Documents</div>
-                        <AadharPDFButton onClick={() => alert("Opening Proof: " + v.userId)}>
-                          <FiFileText size={18} /> Insp. Evidence <FiExternalLink size={14} style={{ marginLeft: 'auto', opacity: 0.6 }} />
-                        </AadharPDFButton>
-                        <div style={{ background: '#f0fdf4', border: '2px solid #bbf7d0', padding: '0.75rem', borderRadius: '4px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#166534', fontWeight: 800 }}>
-                            <FiCheck size={14} /> ID VERIFIED
+                        {v.aadhaarPdfPath ? (
+                          <AadharPDFButton
+                            onClick={() =>
+                              window.open(getFileUrl(v.aadhaarPdfPath), '_blank', 'noopener,noreferrer')
+                            }
+                          >
+                            <FiFileText size={18} /> View Aadhaar PDF <FiExternalLink size={14} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+                          </AadharPDFButton>
+                        ) : (
+                          <div style={{ background: '#fef9c3', border: '1px solid #fde68a', padding: '0.75rem', borderRadius: '4px', fontSize: '0.75rem', color: '#92400e', fontWeight: 700 }}>
+                            No Aadhaar PDF uploaded
                           </div>
-                        </div>
+                        )}
                       </DocSection>
                     </VerificationZone>
                   </td>

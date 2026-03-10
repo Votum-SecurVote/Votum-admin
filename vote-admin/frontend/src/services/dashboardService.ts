@@ -5,22 +5,13 @@ export interface DashboardStats {
   activeElections: number;
   pendingCandidates: number;
   approvedCandidates: number;
-  recentActivity: ActivityItem[];
-}
-
-export interface ActivityItem {
-  id: string;
-  type: 'ELECTION' | 'CANDIDATE' | 'BALLOT';
-  action: string;
-  description: string;
-  timestamp: string;
-  user?: string;
+  recentActivity: string[];
 }
 
 const dashboardService = {
-  // Get dashboard statistics
+  // Get dashboard statistics from the backend admin metrics endpoint
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const response = await api.get('/dashboard/stats');
+    const response = await api.get('/admin/metrics');
     return response.data;
   },
 };

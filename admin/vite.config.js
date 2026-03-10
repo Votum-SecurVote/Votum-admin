@@ -2,9 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/admin/',   // ✅ MUST be here
+  base: '/admin/',
 
   plugins: [react()],
+
+  server: {
+    proxy: {
+      // Forward all /api requests to the Spring Boot backend
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
 
   test: {
     environment: 'jsdom',
@@ -12,3 +22,4 @@ export default defineConfig({
     globals: true,
   },
 })
+
