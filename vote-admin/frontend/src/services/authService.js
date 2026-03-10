@@ -1,20 +1,21 @@
-import axios from 'axios';
+import api from './api';
 
-const API = 'http://localhost:5000/api';
+/**
+ * Login as admin.
+ * Backend: POST /api/admin/login
+ * Returns: plain JWT string
+ */
+export const loginAdmin = async (email, password) => {
+  const res = await api.post('/admin/login', { email, password });
 
-export const loginAdmin = async (username, password) => {
-  const res = await axios.post(`${API}/auth/login`, {
-    username,
-    password,
-  });
+  // Backend returns a plain JWT string, not an object
+  const token = res.data;
 
   localStorage.setItem(
     'auth',
-    JSON.stringify({
-      token: res.data.token,
-      role: res.data.role,
-    })
+    JSON.stringify({ token, role: 'ADMIN' })
   );
 
-  return res.data;
+  return { token, role: 'ADMIN' };
 };
+

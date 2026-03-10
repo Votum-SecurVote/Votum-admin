@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FiPlus, FiEdit, FiEye, FiShield, FiLogIn, FiLogOut, FiLock } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiShield, FiLogIn, FiLogOut, FiLock, FiHome } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const Nav = styled.nav`
@@ -110,6 +110,7 @@ const Navbar = () => {
   const isAdmin = user?.role === 'ADMIN';
 
   const navItems = [
+    { to: '/admin/dashboard', icon: <FiHome />, label: 'Dashboard' },
     { to: '/admin/election/create', icon: <FiPlus />, label: 'Create Election' },
     { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot Management' },
     { to: '/admin/election/view', icon: <FiEye />, label: 'Audit / View' },

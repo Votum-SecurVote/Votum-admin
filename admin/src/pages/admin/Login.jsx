@@ -167,11 +167,17 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // loginAdmin returns the plain JWT string from the backend
       const token = await loginAdmin(email, password);
-      login({ token, role: "ADMIN" });
+      if (!token || typeof token !== 'string') {
+        throw new Error('Invalid token received');
+      }
+      // Store in the shape AuthContext expects: { token, role }
+      login({ token, role: 'ADMIN' });
       navigate('/admin/election/view');
     } catch (err) {
-      setError("AUTHENTICATION FAILED: Invalid credentials provided.");
+      console.error('Login failed:', err);
+      setError('AUTHENTICATION FAILED: Invalid credentials provided.');
     } finally {
       setLoading(false);
     }
