@@ -157,11 +157,11 @@ describe('BallotDesigner Component', () => {
         await user.click(addBtn);
 
         await waitFor(() => {
-            expect(electionService.createCandidate).toHaveBeenCalledWith('BALLOT-1', {
-                name: 'Jane Smith',
-                party: 'Green Party',
-                symbol: null
-            });
+            expect(electionService.createCandidate).toHaveBeenCalledWith(
+                'BALLOT-1',
+                { name: 'Jane Smith', party: 'Green Party' },
+                null   // no photo file uploaded in this test
+            );
         });
 
         await waitFor(() => {

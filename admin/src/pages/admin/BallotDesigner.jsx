@@ -378,7 +378,9 @@ const BallotDesigner = () => {
                           <CandidateRow key={c.id} value={c}>
                             <FiGrid style={{ color: '#cbd5e1', cursor: 'grab' }} />
                              <div className="avatar">
-                               {c.photoUrl || c.symbol ? <img src={c.photoUrl || c.symbol} alt="" /> : <FiUser size={24} color="#cbd5e1" style={{ margin: 12 }} />}
+                               {(c.photoPath || c.symbolPath)
+                                 ? <img src={`/api/files/${c.photoPath || c.symbolPath}`} alt={c.name} />
+                                 : <FiUser size={24} color="#cbd5e1" style={{ margin: 12 }} />}
                              </div>
                             <div className="info">
                               <h4>{c.name}</h4>
