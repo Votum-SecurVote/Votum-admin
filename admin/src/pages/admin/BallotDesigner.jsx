@@ -278,7 +278,7 @@ const BallotDesigner = () => {
         newCandidate.symbolFile || null    // party logo → multipart "symbol"
       );
       setCandidates(prev => [...prev, createdCandidate]);
-      setBallots(prev => prev.map(b => b.id === activeBallot.id ? { ...b, options: [...(b.options || []), createdCandidate] } : b));
+      setBallots(prev => prev.map(b => b.id === activeBallot.id ? { ...b, candidates: [...(b.candidates || []), createdCandidate] } : b));
       setNewCandidate({ name: '', party: '', photoFile: null, photoPreview: null, symbolFile: null, symbolPreview: null });
     } catch (e) { console.error(e); alert("Candidate Entry Failed"); }
     finally { setProcessing(false); }
@@ -312,7 +312,7 @@ const BallotDesigner = () => {
               {ballots.map(b => (
                 <BallotItem key={b.id} $active={activeBallot?.id === b.id} onClick={() => setActiveBallot(b)}>
                   <h4>{b.title}</h4>
-                  <span>{(b.options || []).length} Registered Candidates</span>
+                  <span>{(b.candidates || []).length} Registered Candidates</span>
                 </BallotItem>
               ))}
             </BallotList>
