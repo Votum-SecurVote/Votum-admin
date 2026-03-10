@@ -204,6 +204,7 @@ const ElectionView = () => {
   const [elections, setElections] = useState([]);
   const [selected, setSelected] = useState(null);
   const [ballots, setBallots] = useState([]);
+  const [candidates, setCandidates] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -223,7 +224,27 @@ const ElectionView = () => {
     try {
       const res = await electionService.getElectionBallots(id);
       setBallots(res || []);
-    } catch { setBallots([]); }
+
+      // Load candidates for each ballot
+      const candidatePromises = (res || []).map(async (ballot) => {
+        try {
+          const cands = await electionService.getBallotCandidates(ballot.id);
+          return { ballotId: ballot.id, candidates: cands };
+        } catch {
+          return { ballotId: ballot.id, candidates: [] };
+        }
+      });
+
+      const candidateResults = await Promise.all(candidatePromises);
+      const candidateMap = {};
+      candidateResults.forEach(({ ballotId, candidates }) => {
+        candidateMap[ballotId] = candidates;
+      });
+      setCandidates(candidateMap);
+    } catch {
+      setBallots([]);
+      setCandidates({});
+    }
   };
 
   const handleAction = async (actionFn) => {
@@ -315,11 +336,28 @@ const ElectionView = () => {
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   {(ballots || []).map(b => (
-                    <div key={b.id} style={{ border: '1px solid #e2e8f0', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderRadius: '2px' }}>
-                      <FiBox color="#94a3b8" />
+                    <div key={b.id} style={{ border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                        <FiBox color="#94a3b8" />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>{b.title}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>STATUS: {b.status || 'DRAFT'}</div>
+                        </div>
+                      </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>{b.title}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>STATUS: {b.status || 'DRAFT'}</div>
+                        <h5 style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Candidates & Votes</h5>
+                        {(candidates[b.id] || []).map(c => (
+                          <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{c.party}</div>
+                            </div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e40af' }}>{c.voteCount || 0} votes</div>
+                          </div>
+                        ))}
+                        {(candidates[b.id] || []).length === 0 && (
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>No candidates configured</div>
+                        )}
                       </div>
                     </div>
                   ))}
