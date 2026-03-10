@@ -193,9 +193,15 @@ const CandidateRow = styled(Reorder.Item)`
   padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;
   
   .avatar {
-    width: 50px; height: 50px; border-radius: 4px; background: #f8fafc;
-    border: 1px solid #e2e8f0; overflow: hidden;
+    width: 80px; height: 80px; border-radius: 4px; background: #f8fafc;
+    border: 1px solid #e2e8f0; overflow: hidden; flex-shrink: 0;
     img { width: 100%; height: 100%; object-fit: cover; }
+  }
+  .symbol-badge {
+    width: 40px; height: 40px; border-radius: 4px; background: #f8fafc;
+    border: 1px solid #e2e8f0; overflow: hidden; flex-shrink: 0;
+    img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+    display: flex; align-items: center; justify-content: center;
   }
   .info { flex: 1; h4 { margin: 0; color: #1e293b; font-size: 1rem; } p { margin: 0; font-size: 0.8rem; color: #64748b; font-weight: 600; } }
 `;
@@ -208,7 +214,7 @@ const BallotDesigner = () => {
   const [activeBallot, setActiveBallot] = useState(null);
   const [newBallotTitle, setNewBallotTitle] = useState('');
   const [candidates, setCandidates] = useState([]);
-  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', imageFile: null, imagePreview: null });
+  const [newCandidate, setNewCandidate] = useState({ name: '', party: '', photoFile: null, photoPreview: null, symbolFile: null, symbolPreview: null });
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
@@ -268,11 +274,12 @@ const BallotDesigner = () => {
       const createdCandidate = await electionService.createCandidate(
         activeBallot.id,
         { name: newCandidate.name, party: newCandidate.party },
-        newCandidate.imageFile || null   // pass file for multipart upload
+        newCandidate.photoFile || null,    // photo → multipart "photo"
+        newCandidate.symbolFile || null    // party logo → multipart "symbol"
       );
       setCandidates(prev => [...prev, createdCandidate]);
       setBallots(prev => prev.map(b => b.id === activeBallot.id ? { ...b, options: [...(b.options || []), createdCandidate] } : b));
-      setNewCandidate({ name: '', party: '', imageFile: null, imagePreview: null });
+      setNewCandidate({ name: '', party: '', photoFile: null, photoPreview: null, symbolFile: null, symbolPreview: null });
     } catch (e) { console.error(e); alert("Candidate Entry Failed"); }
     finally { setProcessing(false); }
   };
@@ -348,15 +355,29 @@ const BallotDesigner = () => {
                         onChange={e => setNewCandidate({ ...newCandidate, party: e.target.value })}
                       />
 
-                      <FieldLabel>Official Symbol / Portrait</FieldLabel>
-                       <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '2px dashed #cbd5e1', cursor: 'pointer', background: 'white', marginBottom: '1.5rem' }}>
-                         {newCandidate.imagePreview ? <img src={newCandidate.imagePreview} style={{ width: 40, height: 40 }} alt="" /> : <FiUploadCloud color="#1e40af" />}
-                         <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{newCandidate.imagePreview ? 'Replace Image' : 'Select Official File'}</span>
-                         <input type="file" hidden accept="image/*" onChange={e => {
-                           const file = e.target.files?.[0];
-                           if (file) setNewCandidate({ ...newCandidate, imageFile: file, imagePreview: URL.createObjectURL(file) });
-                         }} />
-                       </label>
+                      <FieldLabel>Candidate Photo / Portrait</FieldLabel>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '2px dashed #cbd5e1', cursor: 'pointer', background: 'white', marginBottom: '1rem', borderRadius: 4 }}>
+                        {newCandidate.photoPreview
+                          ? <img src={newCandidate.photoPreview} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 4 }} alt="" />
+                          : <FiUploadCloud color="#1e40af" size={28} />}
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{newCandidate.photoPreview ? 'Replace Photo' : 'Upload Candidate Portrait'}</span>
+                        <input type="file" hidden accept="image/*" onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) setNewCandidate({ ...newCandidate, photoFile: file, photoPreview: URL.createObjectURL(file) });
+                        }} />
+                      </label>
+
+                      <FieldLabel>Party Symbol / Logo</FieldLabel>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', border: '2px dashed #cbd5e1', cursor: 'pointer', background: 'white', marginBottom: '1.5rem', borderRadius: 4 }}>
+                        {newCandidate.symbolPreview
+                          ? <img src={newCandidate.symbolPreview} style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 4 }} alt="" />
+                          : <FiUploadCloud color="#1e40af" size={28} />}
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{newCandidate.symbolPreview ? 'Replace Symbol' : 'Upload Party Symbol / Logo'}</span>
+                        <input type="file" hidden accept="image/*" onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) setNewCandidate({ ...newCandidate, symbolFile: file, symbolPreview: URL.createObjectURL(file) });
+                        }} />
+                      </label>
 
                       <PrimaryButton onClick={handleAddCandidate} disabled={processing}>
                         <FiCheck /> Register to Ballot
@@ -377,11 +398,16 @@ const BallotDesigner = () => {
                         {candidates.map(c => (
                           <CandidateRow key={c.id} value={c}>
                             <FiGrid style={{ color: '#cbd5e1', cursor: 'grab' }} />
-                             <div className="avatar">
-                               {(c.photoPath || c.symbolPath)
-                                 ? <img src={`/api/files/${c.photoPath || c.symbolPath}`} alt={c.name} />
-                                 : <FiUser size={24} color="#cbd5e1" style={{ margin: 12 }} />}
-                             </div>
+                            <div className="avatar">
+                              {c.photoPath
+                                ? <img src={`/api/files/${c.photoPath}`} alt={c.name} />
+                                : <FiUser size={32} color="#cbd5e1" style={{ margin: 'auto', display: 'block', marginTop: 24 }} />}
+                            </div>
+                            <div className="symbol-badge">
+                              {c.symbolPath
+                                ? <img src={`/api/files/${c.symbolPath}`} alt="symbol" />
+                                : <FiShield size={16} color="#cbd5e1" />}
+                            </div>
                             <div className="info">
                               <h4>{c.name}</h4>
                               <p>{c.party}</p>

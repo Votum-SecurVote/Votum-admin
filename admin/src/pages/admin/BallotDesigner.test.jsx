@@ -160,7 +160,8 @@ describe('BallotDesigner Component', () => {
             expect(electionService.createCandidate).toHaveBeenCalledWith(
                 'BALLOT-1',
                 { name: 'Jane Smith', party: 'Green Party' },
-                null   // no photo file uploaded in this test
+                null,  // no photo file uploaded
+                null   // no symbol file uploaded
             );
         });
 
