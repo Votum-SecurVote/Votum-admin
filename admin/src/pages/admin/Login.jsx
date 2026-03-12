@@ -174,7 +174,7 @@ const Login = () => {
       }
       // Store in the shape AuthContext expects: { token, role }
       login({ token, role: 'ADMIN' });
-      navigate('/admin/election/view');
+      navigate('/election/view');
     } catch (err) {
       console.error('Login failed:', err);
       setError('AUTHENTICATION FAILED: Invalid credentials provided.');

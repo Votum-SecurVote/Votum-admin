@@ -34,73 +34,20 @@ const AppContent = () => {
 
       <AnimatePresence mode="wait">
         <Routes>
-          <Route
-            path="/login"
-            element={
-              <PageTransition>
-                <Login />
-              </PageTransition>
-            }
-          />
+          <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
 
-          <Route
-            path="/elections/public"
-            element={
-              <PageTransition>
-                <ElectionView mode="public" />
-              </PageTransition>
-            }
-          />
+          <Route path="/elections/public" element={<PageTransition><ElectionView mode="public" /></PageTransition>} />
 
-          <Route path="/admin" element={<AdminRoute />}>
-            <Route
-              path="dashboard"
-              element={
-                <PageTransition>
-                  <Dashboard />
-                </PageTransition>
-              }
-            />
-
-            <Route
-              path="election/create"
-              element={
-                <PageTransition>
-                  <ElectionCreate />
-                </PageTransition>
-              }
-            />
-
-            <Route
-              path="ballot/design"
-              element={
-                <PageTransition>
-                  <BallotDesigner />
-                </PageTransition>
-              }
-            />
-
-            <Route
-              path="election/view"
-              element={
-                <PageTransition>
-                  <ElectionView mode="admin" />
-                </PageTransition>
-              }
-            />
-
-            <Route
-              path="voters/approval"
-              element={
-                <PageTransition>
-                  <VoterApproval />
-                </PageTransition>
-              }
-            />
+          <Route element={<AdminRoute />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+            <Route path="election/create" element={<PageTransition><ElectionCreate /></PageTransition>} />
+            <Route path="ballot/design" element={<PageTransition><BallotDesigner /></PageTransition>} />
+            <Route path="election/view" element={<PageTransition><ElectionView mode="admin" /></PageTransition>} />
+            <Route path="voters/approval" element={<PageTransition><VoterApproval /></PageTransition>} />
           </Route>
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AnimatePresence>
     </div>
@@ -109,7 +56,7 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <Router>
+    <Router basename="/admin">
       <AppContent />
     </Router>
   );

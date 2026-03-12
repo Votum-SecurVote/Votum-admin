@@ -110,11 +110,11 @@ const Navbar = () => {
   const isAdmin = user?.role === 'ADMIN';
 
   const navItems = [
-    { to: '/admin/dashboard', icon: <FiHome />, label: 'Dashboard' },
-    { to: '/admin/election/create', icon: <FiPlus />, label: 'Create Election' },
-    { to: '/admin/ballot/design', icon: <FiEdit />, label: 'Ballot Management' },
-    { to: '/admin/election/view', icon: <FiEye />, label: 'Audit / View' },
-    { to: '/admin/voters/approval', icon: <FiShield />, label: 'Voter Registry' },
+    { to: '/dashboard', icon: <FiHome />, label: 'Dashboard' },
+    { to: '/election/create', icon: <FiPlus />, label: 'Create Election' },
+    { to: '/ballot/design', icon: <FiEdit />, label: 'Ballot Management' },
+    { to: '/election/view', icon: <FiEye />, label: 'Audit / View' },
+    { to: '/voters/approval', icon: <FiShield />, label: 'Voter Registry' },
   ];
 
   const handleAuth = () => {
